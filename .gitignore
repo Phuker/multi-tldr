@@ -1,5 +1,6 @@
-# User specified
-####################
+.DS_Store
+._.DS_Store
+
 
 # virtualenv folder
 venv/
@@ -7,6 +8,9 @@ venv33/
 
 # pycharm
 .idea/
+.vscode/
+
+.python-version
 
 # temp folder
 temp/
