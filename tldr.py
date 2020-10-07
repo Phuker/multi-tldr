@@ -4,7 +4,7 @@
 """
 multi-tldr
 
-A python client for tldr: simplified and community-driven man pages.
+Yet another python client for tldr: simplified and community-driven man pages.
 """
 
 
@@ -24,7 +24,7 @@ __version__ = "0.9.0"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
-__copyright__ = "Copyright 2020 Phuker"
+__copyright__ = "Copyright (c) 2020 Phuker, Copyright (c) 2015 lord63"
 
 
 logging_stream = sys.stderr
@@ -60,6 +60,8 @@ if sys.flags.optimize > 0:
     sys.exit(1)
 
 
+_cache = {}
+
 
 def get_config_path():
     config_dir_path = os.environ.get('TLDR_CONFIG_DIR') or '~'
@@ -72,11 +74,18 @@ def get_config_path():
 def get_config():
     """Get the configurations and return it as a dict."""
 
+    cache_key = 'config'
+    cache_value = _cache.get(cache_key, None)
+    if cache_value is not None:
+        logging.debug('Cache hit: %r', cache_key)
+        return cache_value
+
     config_path = get_config_path()
     if not os.path.exists(config_path):
         logging.error("Can't find config file at: %r. You may use `tldr --init` to init the config file.", config_path)
         sys.exit(1)
 
+    logging.debug('Reading file: %r', config_path)
     with open(config_path, 'r', encoding='utf-8') as f:
         try:
             config = json.load(f)
@@ -97,6 +106,7 @@ def get_config():
             logging.error("Can't find the tldr repo, check the `repo_directory` setting in config file.")
             sys.exit(1)
 
+    _cache[cache_key] = config
     return config
 
 
@@ -104,6 +114,8 @@ def parse_page(page):
     """Parse the command man page."""
 
     colors = get_config()['colors']
+
+    logging.debug('Reading file: %r', page)
     with open(page, 'r', encoding='utf-8') as f:
         lines = f.readlines()
     
@@ -128,13 +140,38 @@ def parse_page(page):
 
 
 def get_index(repo_directory):
-    """Retrieve index in the pages directory."""
+    """Generate index in the pages directory."""
 
     assert type(repo_directory) == str
 
-    with open(os.path.join(repo_directory, 'pages/index.json'), 'r', encoding='utf-8') as f:
-        index = json.load(f)
+    cache_key = 'index_' + repo_directory
+    cache_value = _cache.get(cache_key, None)
+    if cache_value is not None:
+        logging.debug('Cache hit: %r', cache_key)
+        return cache_value
+
+    page_path = repo_directory
+
+    logging.debug('os.walk() in %r', page_path)
+    tree_generator = os.walk(page_path)
+    folders = next(tree_generator)[1]
+    commands, index = {}, {}
+    for folder in folders:
+        pages = next(tree_generator)[2]
+        for page in pages:
+            command_name = os.path.splitext(page)[0]
+            if command_name not in commands:
+                commands[command_name] = {
+                    'name': command_name,
+                    'platform': [folder]
+                }
+            else:
+                commands[command_name]['platform'].append(folder)
     
+    command_list = [item[1] for item in sorted(commands.items(), key=itemgetter(0))]
+    index['commands'] = command_list
+    
+    _cache[cache_key] = index
     return index
 
 
@@ -169,54 +206,22 @@ def find_page_location(command, platform_list, repo_directory):
     index = get_index(repo_directory)
     command_list = find_commands(repo_directory)
 
-    page_path_list = []
-
     if command not in command_list:
-        return page_path_list
+        return []
 
     supported_platforms = index['commands'][command_list.index(command)]['platform']
 
+    page_path_list = []
     for platform in platform_list:
         if platform in supported_platforms:
-            page_path = os.path.join(os.path.join(repo_directory, 'pages'), os.path.join(platform, command + '.md'))
+            page_path = os.path.join(repo_directory, os.path.join(platform, command + '.md'))
             page_path_list.append(page_path)
     
     return page_path_list
 
 
-def build_index():
-    """Rebuild the index."""
-
-    repo_directory_list = get_config()['repo_directory']
-
-    for repo_directory in repo_directory_list:
-        logging.info('Rebuild the index in %r', repo_directory)
-        index_path = os.path.join(repo_directory, 'pages', 'index.json')
-        page_path = os.path.join(repo_directory, 'pages')
-
-        tree_generator = os.walk(page_path)
-        folders = next(tree_generator)[1]
-        commands, new_index = {}, {}
-        for folder in folders:
-            pages = next(tree_generator)[2]
-            for page in pages:
-                command_name = os.path.splitext(page)[0]
-                if command_name not in commands:
-                    commands[command_name] = {
-                        'name': command_name,
-                        'platform': [folder]
-                    }
-                else:
-                    commands[command_name]['platform'].append(folder)
-        command_list = [item[1] for item in sorted(commands.items(), key=itemgetter(0))]
-        new_index['commands'] = command_list
-
-        with open(index_path, mode='w') as f:
-            json.dump(new_index, f)
-
-
 def find(command, platform):
-    """Find the command usage."""
+    """Find and display the tldr pages of a command."""
 
     repo_directory_list = get_config()['repo_directory']
     default_platform_list = get_config()['platform']
@@ -242,7 +247,7 @@ def find(command, platform):
 
 
 def update():
-    """Update to the latest pages."""
+    """Update all tldr pages repo."""
 
     repo_directory_list = get_config()['repo_directory']
 
@@ -250,8 +255,6 @@ def update():
         os.chdir(repo_directory)
         logging.info("Check for updates in %r ...", repo_directory)
         subprocess.call(['git', 'pull', '--stat'])
-    
-    build_index()
 
 
 def init():
@@ -264,7 +267,7 @@ def init():
             return
     
     repo_path_list = []
-    logging.info('Please input repo path line by line, empty line to end.')
+    logging.info('Please input repo path line by line, to "pages/" level, empty line to end.')
     while True:
         repo_path = click.prompt("Input 1 tldr repo path", default='')
         if len(repo_path) == 0:
@@ -303,11 +306,9 @@ def init():
     with open(config_path, 'w') as f:
         f.write(json.dumps(config, ensure_ascii=True, indent=4))
 
-    build_index()
-
 
 def locate(command, platform):
-    """Locate the command's man page file path."""
+    """Locate all tldr page files path of the command."""
 
     repo_directory_list = get_config()['repo_directory']
     default_platform_list = get_config()['platform']
@@ -326,7 +327,7 @@ def locate(command, platform):
 
 
 def list_command(platform): # do NOT name 'list', conflict with keyword
-    """list the command's man page."""
+    """List all commands (on a specific platform if specified)."""
 
     repo_directory_list = get_config()['repo_directory']
     for repo_directory in repo_directory_list:
@@ -337,36 +338,37 @@ def list_command(platform): # do NOT name 'list', conflict with keyword
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Yet another python client for tldr.',
+        description='Yet another python client for tldr: simplified and community-driven man pages.',
         epilog='https://github.com/Phuker/multi-tldr',
         add_help=True
     )
     group = parser.add_mutually_exclusive_group(required=False)
-    group.add_argument('--init',  action="store_true", help="Gererate config file, rebuild the index")
-    group.add_argument('--locate', metavar='command', help="Locate tldr page file path of a command")
-    group.add_argument('--list',  action="store_true", help="Print a command list")
-    group.add_argument('--reindex',  action="store_true", help="Rebuild the index")
-    group.add_argument('--update',  action="store_true", help="Pull all git repo, rebuild the index")
+    group.add_argument('--init',  action="store_true", help="Gererate config file")
+    group.add_argument('--locate', metavar='command', help="Locate all tldr page files path of a command")
+    group.add_argument('--list',  action="store_true", help="Print command list")
+    group.add_argument('--update',  action="store_true", help="Pull all git repo")
     
     parser.add_argument('command', help="Command to query", nargs='?')
-    parser.add_argument('-V', '--version',  action="store_true", help="Show version and exit.")
-    parser.add_argument('-p', '--platform', help='Specify platform.', choices=['common', 'linux', 'osx', 'sunos', 'windows'])
+    parser.add_argument('-V', '--version',  action="store_true", help="Show version and exit")
+    parser.add_argument('-p', '--platform', help='Specify platform', choices=['common', 'linux', 'osx', 'sunos', 'windows'])
 
     args = parser.parse_args()
 
-    ctrl_group_set = args.init or args.locate is not None or args.list or args.reindex or args.update or args.version
+    ctrl_group_set = args.init or args.locate is not None or args.list or args.update or args.version
     if ctrl_group_set and args.command is not None:
         logging.error('No need argument: command')
+        parser.print_help()
         sys.exit(1)
     if not ctrl_group_set and args.command is None:
         logging.error('Need argument: command')
+        parser.print_help()
         sys.exit(1)
     
     return args
 
 
 def cli():
-    """A python client for tldr: simplified and community-driven man pages."""
+    """Yet another python client for tldr: simplified and community-driven man pages."""
 
     args = parse_args()
 
@@ -378,8 +380,6 @@ def cli():
         locate(args.locate, args.platform)
     elif args.list:
         list_command(args.platform)
-    elif args.reindex:
-        build_index()
     elif args.update:
         update()
     else:

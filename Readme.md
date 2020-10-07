@@ -2,11 +2,11 @@
 
 Yet another python client for [tldr](https://github.com/tldr-pages/tldr).
 
-Forked and modified from [tldr.py](https://github.com/lord63/tldr.py), whose original idea is very good.
+Forked and modified from [lord63/tldr.py](https://github.com/lord63/tldr.py), whose original idea is very good.
 
 ## Intro
 
-tldr.py is a python client for [tldr](https://github.com/tldr-pages/tldr): simplified and community-driven man pages.
+This is a python client for [tldr](https://github.com/tldr-pages/tldr): simplified and community-driven man pages.
 
 Instead of the long man pages:
 
@@ -28,9 +28,11 @@ One more thing, tldr is just a simple version for the man page, it's **NOT** an 
 ### Differences with `lord63/tldr.py`
 
 - No need to use `tldr find xxxxxx` or alias to `tldr find`, just type `tldr xxxxxx` ([related issue](https://github.com/lord63/tldr.py/issues/47))
-- Support display multi repo and multi platform at the same time. You can create your private tldr pages repo.
+- No need to rebuild index, or generate `index.json` file.
+- Support display multi repo and multi platform at the same time. You can create your own private tldr pages repo.
 - Render `{{` and `}}` ([related issue](https://github.com/lord63/tldr.py/issues/25))
 - Config file format `YAML` --> `JSON`, because I hate `YAML`.
+- Support tlgr pages in other languages, by specify `repo_directory` dir path to the `pages/` level.
 - Drop support for Python 2.
 
 ## Install
@@ -45,17 +47,17 @@ python3 -m pip install git+https://github.com/Phuker/multi-tldr.git
 
 First, clone the tldr pages repo to somewhere (e.g. `~/code/tldr`). We will use it when we look for a command usage.
 
-```console
-$ cd ~/code
-$ git clone https://github.com/tldr-pages/tldr.git
+```bash
+cd ~/code
+git clone https://github.com/tldr-pages/tldr.git
 ```
 
 Then, create the configuration file, the default location for the configuration file is `~/.tldrrc.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
 
-Run this command to generate configuration file and build index:
+Run this command to generate configuration file:
 
-```console
-$ tldr --init
+```bash
+tldr --init
 ```
 
 Your configuration file should look like this:
@@ -74,8 +76,8 @@ Your configuration file should look like this:
         "linux"
     ],
     "repo_directory":[
-        "/home/user/code/tldr",
-        "/home/user/code/tldr-private"
+        "/home/user/code/tldr/pages/",
+        "/home/user/code/tldr-private/pages.zh"
     ]
 }
 ```
@@ -87,11 +89,11 @@ The `colors` option is for the output when you look for a command, you can custo
 
 look for a command usage:
 
-```console
-$ tldr {{command}}
+```bash
+tldr {{command}}
 ```
 
-Check for updates (so that we can get the latest man pages) and auto reindex:
+Check for updates (so that we can get the latest man pages):
 
 ```console
 $ tldr --update
@@ -101,18 +103,10 @@ Check for updates in '/home/user/code/tldr-private' ...
 Already up to date.
 ```
 
-Rebuild the index. This program will find the command via the `index.json`. After a new fresh clone or when you add some new pages, remember to rebuild the index:
+Locate all tldr page files path of the command:
 
-```console
-$ tldr reindex
-Rebuild the index in '/home/user/code/tldr'
-Rebuild the index in '/home/user/code/tldr-private'
-```
-
-Locate the command man page:
-
-```console
-$ tldr --locate {{command}}
+```bash
+tldr --locate {{command}}
 ```
 
 Or you can use `tldr --help` to get the help message.
@@ -120,13 +114,18 @@ Or you can use `tldr --help` to get the help message.
 ## FAQ
 
 **Q: I want to add some custom command usages to a command, how to do it?**
+
 **Q: I want to add some custom command pages, how?**
 
-A: You can contribute to `tldr-pages/tldr`, or create your own repo, and add it to `repo_directory`. Remember to rebuild the index.
+A: You can contribute to `tldr-pages/tldr`, or create your own repo, and add it to `repo_directory`.
 
 **Q: I want a short command like `tldr COMMAND`, not `tldr find COMMAND`.**
 
 A: This problem not exists any more.
+
+**Q: Do I need to rebuild any index after `git pull` or create new `.md` files?**
+
+A: You don't any more. Local file is fast enough, and I added a cache variable.
 
 **Q: I want fuzzy find command usage.**
 
@@ -159,4 +158,4 @@ Contributions are always welcome at any time!
 
 ## License
 
-MIT.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
