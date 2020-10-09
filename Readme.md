@@ -1,18 +1,12 @@
 # multi-tldr
 
-Yet another python client for [tldr](https://github.com/tldr-pages/tldr).
+Yet another python client for [tldr-pages/tldr](https://github.com/tldr-pages/tldr). View tldr pages in multi repo, multi platform, any language at the same time.
 
 Forked and modified from [lord63/tldr.py](https://github.com/lord63/tldr.py), whose original idea is very good.
 
 ## Intro
 
-This is a python client for [tldr](https://github.com/tldr-pages/tldr): simplified and community-driven man pages.
-
-Instead of the long man pages:
-
-![tar-man-page](https://cloud.githubusercontent.com/assets/5268051/10731428/5b5fd2fc-7c30-11e5-8cb1-4a3a24218ede.jpeg)
-
-tldr will give you several simple yet powerful examples:
+Instead of the long man pages, tldr will give you several simple yet powerful examples:
 
 ![tar-tldr-page](screenshots/screenshot1.png)
 
@@ -20,9 +14,9 @@ The command examples are not good? Don't worry, you can set up your own `tldr`! 
 
 One more thing, tldr is just a simple version for the man page, it's **NOT** an alternative. Sometimes, you should read the man pages patiently ;)
 
-## Features highlight
+## Features
 
-- Use local file, managed and updated by `git`, fast.
+- Use local file, fast and no network delay. tldr pages are managed and updated by `git`.
 - Support custom the output color.
 
 ### Differences with `lord63/tldr.py`
@@ -30,15 +24,24 @@ One more thing, tldr is just a simple version for the man page, it's **NOT** an 
 - No need to use `tldr find xxxxxx` or alias to `tldr find`, just type `tldr xxxxxx` ([related issue](https://github.com/lord63/tldr.py/issues/47))
 - No need to rebuild index, or generate `index.json` file.
 - Support display multi repo and multi platform at the same time. You can create your own private tldr pages repo.
+- New feature: compact output, not output empty lines.
 - Render `{{` and `}}` ([related issue](https://github.com/lord63/tldr.py/issues/25))
 - Config file format `YAML` --> `JSON`, because I hate `YAML`.
 - Support tlgr pages in other languages, by specify `repo_directory` dir path to the `pages/` level.
 - Drop support for Python 2.
 
+## Requirements
+
+- Python >= `3.6`, with `pip` installed
+
+### Recommend
+
+- Git: if you do not have `git`, you can still download `.zip` file from [tldr-pages/tldr](https://github.com/tldr-pages/tldr), extract it, and add it to `repo_directory` config, most things still works, but `tldr --update` will NOT work.
+
 ## Install
 
 ```bash
-python3 -m pip install git+https://github.com/Phuker/multi-tldr.git
+python3 -m pip install multi-tldr
 ```
 
 ## Usage
@@ -49,7 +52,7 @@ First, clone the tldr pages repo to somewhere (e.g. `~/code/tldr`). We will use 
 
 ```bash
 cd ~/code
-git clone https://github.com/tldr-pages/tldr.git
+git clone --depth=1 https://github.com/tldr-pages/tldr.git
 ```
 
 Then, create the configuration file, the default location for the configuration file is `~/.tldrrc.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
@@ -64,21 +67,22 @@ Your configuration file should look like this:
 
 ```json
 {
-    "colors":{
+    "repo_directory": [
+        "/home/user/code/tldr/pages/",
+        "/home/user/code/tldr-private/pages.zh"
+    ],
+    "colors": {
         "description": "cyan",
         "usage": "green",
         "command": "white",
         "param": "cyan"
     },
-    "platform":[
+    "platform": [
         "common",
         "osx",
         "linux"
     ],
-    "repo_directory":[
-        "/home/user/code/tldr/pages/",
-        "/home/user/code/tldr-private/pages.zh"
-    ]
+    "compact_output": true
 }
 ```
 

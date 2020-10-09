@@ -5,13 +5,13 @@ from setuptools import setup
 
 import tldr
 
-with open('Readme.md') as f:
+with open('Readme.PyPI.md', 'r') as f:
     long_description = f.read()
 
 setup(
     name='multi-tldr',
     version=tldr.__version__,
-    description='A python client for tldr: simplified and community-driven man pages.',
+    description='Yet another python client for tldr',
     long_description=long_description,
     long_description_content_type="text/markdown",
     author='Phuker',
@@ -36,5 +36,5 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
     ],
-    python_requires = '>=3'
+    python_requires = '>=3.6'
 )

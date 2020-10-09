@@ -20,7 +20,7 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
@@ -71,6 +71,28 @@ def get_config_path():
     return config_path
 
 
+def check_config(config):
+    assert type(config) == dict, 'type(config) != dict'
+    assert type(config['colors']) == dict, 'type(colors) != dict'
+    assert type(config['platform']) == list, 'type(platform) != list'
+    assert type(config['repo_directory']) == list, 'type(repo_directory) != list'
+    assert type(config['compact_output']) == bool, 'type(compact_output) != bool'
+
+    supported_colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+    if not set(config['colors'].values()).issubset(set(supported_colors)):
+        bad_colors = set(config['colors'].values()) - set(supported_colors)
+        bad_colors = ', '.join([repr(_) for _ in bad_colors])
+        raise ValueError('Unsupported colors in config file: {}'.format(bad_colors))
+
+    for platform in config['platform']:
+        assert type(platform) == str, 'Bad platform value: {!r}'.format(platform)
+    
+    for _repo_dir in config['repo_directory']:
+        assert type(_repo_dir) == str, 'Bad repo dir value: {!r}'.format(_repo_dir)
+        if not os.path.exists(_repo_dir):
+            raise ValueError("tldr repo dir not exist: {!r}", _repo_dir)
+
+
 def get_config():
     """Get the configurations and return it as a dict."""
 
@@ -93,18 +115,11 @@ def get_config():
             logging.error('Error when load config file %r: %r %r', config_path, type(e), e)
             sys.exit(1)
 
-    assert type(config['platform']) == list
-    assert type(config['repo_directory']) == list
-
-    supported_colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
-    if not set(config['colors'].values()).issubset(set(supported_colors)):
-        logging.error('Unsupported colors in config file: %s', ', '.join(set(config['colors'].values()) - set(supported_colors)))
+    try:
+        check_config(config)
+    except Exception as e:
+        logging.error('Check config failed: %r', e)
         sys.exit(1)
-
-    for _repo_dir in config['repo_directory']:
-        if not os.path.exists(_repo_dir):
-            logging.error("Can't find the tldr repo, check the `repo_directory` setting in config file.")
-            sys.exit(1)
 
     _cache[cache_key] = config
     return config
@@ -114,6 +129,7 @@ def parse_page(page):
     """Parse the command man page."""
 
     colors = get_config()['colors']
+    compact_output = get_config()['compact_output']
 
     logging.debug('Reading file: %r', page)
     with open(page, 'r', encoding='utf-8') as f:
@@ -133,7 +149,10 @@ def parse_page(page):
             line = line.replace('}}', click.style('', fg=colors['command'], underline=False, reset=False))
             output_lines.append(click.style(line, fg=colors['command']))
         elif line.startswith("\n"): # empty line
-            output_lines.append(click.style(line))
+            if compact_output:
+                pass
+            else:
+                output_lines.append(click.style(line))
         else:
             output_lines.append(click.style(line, fg=colors['usage']))
     return output_lines
@@ -263,7 +282,7 @@ def init():
     config_path = get_config_path()
     if os.path.exists(config_path):
         logging.warning("A config file already exists: %r", config_path)
-        if click.prompt('Are you sure want to overwrite it? Enter "yes" to confirm.', default='no') != 'yes':
+        if click.prompt('Are you sure want to overwrite it? (yes/no)', default='no') != 'yes':
             return
     
     repo_path_list = []
@@ -296,10 +315,13 @@ def init():
         "param": click.prompt('Input color for param, empty to use default', type=color_choice, default='cyan'),
     }
 
+    compact_output = click.prompt('Enable compact output (not output empty lines)? (yes/no)', default='no') == 'yes'
+
     config = {
         "repo_directory": repo_path_list,
         "colors": colors,
-        "platform": platform_list
+        "platform": platform_list,
+        "compact_output": compact_output,
     }
 
     logging.info("Write to config file %r", config_path)
