@@ -25,7 +25,7 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 - No need to rebuild index, or generate `index.json` file.
 - Support display multi repo and multi platform at the same time. You can create your own private tldr pages repo.
 - New feature: compact output, not output empty lines.
-- Render `{{` and `}}` ([related issue](https://github.com/lord63/tldr.py/issues/25))
+- Modified parser: render `{{` and `}}` ([related issue](https://github.com/lord63/tldr.py/issues/25)), render `` ` `` inline code.
 - Config file format `YAML` --> `JSON`, because I hate `YAML`.
 - Support tlgr pages in other languages, by specify `repo_directory` dir path to the `pages/` level.
 - Drop support for Python 2.
@@ -71,7 +71,7 @@ Your configuration file should look like this:
         "/home/user/code/tldr-private/pages.zh"
     ],
     "colors": {
-        "description": "cyan",
+        "description": "bright_yellow",
         "usage": "green",
         "command": "white",
         "param": "cyan"
@@ -81,11 +81,11 @@ Your configuration file should look like this:
         "osx",
         "linux"
     ],
-    "compact_output": true
+    "compact_output": false
 }
 ```
 
-The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']`)
+The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'`)
 
 The default location for the configuration file is `~/.tldrrc.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
 

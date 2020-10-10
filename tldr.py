@@ -22,7 +22,7 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.10.0"
+__version__ = "0.11.0"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
@@ -80,7 +80,7 @@ def check_config(config):
     assert type(config['repo_directory']) == list, 'type(repo_directory) != list'
     assert type(config['compact_output']) == bool, 'type(compact_output) != bool'
 
-    supported_colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+    supported_colors = ('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white')
     if not set(config['colors'].values()).issubset(set(supported_colors)):
         bad_colors = set(config['colors'].values()) - set(supported_colors)
         bad_colors = ', '.join([repr(_) for _ in bad_colors])
@@ -133,30 +133,55 @@ def parse_page(page):
     colors = get_config()['colors']
     compact_output = get_config()['compact_output']
 
+    def get_escape_str(*args, **kwargs):
+        kwargs['reset'] = False
+        return click.style('', *args, **kwargs)
+
+    def parse_inline_md(line, line_type):
+        line = line.replace('{{', get_escape_str(fg=colors['param'], underline=True))
+        line = line.replace('}}', get_escape_str(fg=colors[line_type], underline=False))
+
+        line_list = list(line)
+        code_started = False
+        for i in range(len(line)):
+            ch = line[i]
+            if ch == '`':
+                if code_started:
+                    line_list[i] = get_escape_str(fg=colors[line_type])
+                else:
+                    line_list[i] = get_escape_str(fg=colors['command'])
+                code_started = not code_started
+        
+        line = click.style(''.join(line_list), fg=colors[line_type]) # default: reset = True
+        return line
+
     logging.debug('Reading file: %r', page)
     with open(page, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+        lines = f.readlines() # with '\n' end
     
     output_lines = []
     for line in lines[1:]:
         if line.startswith('# '): # h1
             continue
         elif line.startswith('> '): # description
-            output_lines.append(click.style(line[2:], fg=colors['description']))
+            line = parse_inline_md(line[2:], 'description')
+            output_lines.append(line)
         elif line.startswith('- '): # usage
-            output_lines.append(click.style(line[2:], fg=colors['usage']))
+            line = parse_inline_md(line[2:], 'usage')
+            output_lines.append(line)
         elif line.startswith('`'): # code example
-            line = '    ' + line.strip('`\n') + '\n'
-            line = line.replace('{{', click.style('', fg=colors['param'], underline=True, reset=False))
-            line = line.replace('}}', click.style('', fg=colors['command'], underline=False, reset=False))
-            output_lines.append(click.style(line, fg=colors['command']))
+            line = line.strip('`\n')
+            line = parse_inline_md(line, 'command')
+            line = '    ' + line + '\n'
+            output_lines.append(line)
         elif line.startswith("\n"): # empty line
             if compact_output:
                 pass
             else:
-                output_lines.append(click.style(line))
+                output_lines.append(click.style(line)) # default: reset = True
         else:
-            output_lines.append(click.style(line, fg=colors['usage']))
+            line = parse_inline_md(line, 'usage')
+            output_lines.append(line)
     return output_lines
 
 
@@ -263,7 +288,7 @@ def find(command, platform):
     else:
         for page_path in page_path_list:
             output_lines = parse_page(page_path)
-            print(click.style(page_path, underline=True, bold=True))
+            print(click.style(command + ' - ' + page_path, underline=True, bold=True))
             print(''.join(output_lines))
 
 
@@ -309,9 +334,9 @@ def init():
         elif platform not in platform_list:
             platform_list.append(platform)
 
-    color_choice = click.Choice(('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'))
+    color_choice = click.Choice(('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'))
     colors = {
-        "description": click.prompt('Input color for description, empty to use default', type=color_choice, default='cyan'),
+        "description": click.prompt('Input color for description, empty to use default', type=color_choice, default='bright_yellow'),
         "usage": click.prompt('Input color for usage, empty to use default', type=color_choice, default='green'),
         "command": click.prompt('Input color for command, empty to use default', type=color_choice, default='white'),
         "param": click.prompt('Input color for param, empty to use default', type=color_choice, default='cyan'),
