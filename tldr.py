@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 
 """
 multi-tldr
 
-Yet another python client for tldr: simplified and community-driven man pages.
+Yet another python client for tldr-pages/tldr. View tldr pages in multi repo, multi platform, any language at the same time.
+
+https://github.com/Phuker/multi-tldr
 """
 
 
@@ -360,7 +362,7 @@ def list_command(platform): # do NOT name 'list', conflict with keyword
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Yet another python client for tldr: simplified and community-driven man pages.',
+        description='Yet another python client for tldr-pages/tldr. View tldr pages in multi repo, multi platform, any language at the same time.',
         epilog='https://github.com/Phuker/multi-tldr',
         add_help=True
     )
@@ -390,7 +392,7 @@ def parse_args():
 
 
 def cli():
-    """Yet another python client for tldr: simplified and community-driven man pages."""
+    """CLI entry point"""
 
     args = parse_args()
 

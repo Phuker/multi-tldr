@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 
 from setuptools import setup
 
@@ -11,11 +11,11 @@ with open('Readme.PyPI.md', 'r') as f:
 setup(
     name='multi-tldr',
     version=tldr.__version__,
-    description='Yet another python client for tldr',
+    description='Yet another python client for tldr-pages/tldr. View tldr pages in multi repo, multi platform, any language at the same time.',
     long_description=long_description,
     long_description_content_type="text/markdown",
     author='Phuker',
-    # author_email='',
+    author_email='Phuker@users.noreply.github.com',
     url='https://github.com/Phuker/multi-tldr',
     license='MIT',
     keywords='tldr cli man command usage',
@@ -31,6 +31,7 @@ setup(
         ]
     },
     classifiers=[
+        'Environment :: Console',
         'Operating System :: POSIX',
         'Operating System :: POSIX :: Linux',
         'License :: OSI Approved :: MIT License',

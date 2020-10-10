@@ -10,14 +10,14 @@ Instead of the long man pages, tldr will give you several simple yet powerful ex
 
 ![tar-tldr-page](screenshots/screenshot1.png)
 
-The command examples are not good? Don't worry, you can set up your own `tldr`! They are just markdown files and you can modify them at your ease. Don't forget to Share them with the community!
+The command examples are not good? Don't worry, you can set up your own `tldr`! They are just [simplified markdown files](https://github.com/tldr-pages/tldr/blob/master/contributing-guides/style-guide.md) and you can create your own pages. You can contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or keep them private.
 
-One more thing, tldr is just a simple version for the man page, it's **NOT** an alternative. Sometimes, you should read the man pages patiently ;)
+One more thing, `tldr` is just a simple version for the man page, it's **NOT** an alternative. Sometimes, you should read the man pages patiently.
 
 ## Features
 
 - Use local file, fast and no network delay. tldr pages are managed and updated by `git`.
-- Support custom the output color.
+- Support custom output color.
 
 ### Differences with `lord63/tldr.py`
 
@@ -36,28 +36,27 @@ One more thing, tldr is just a simple version for the man page, it's **NOT** an 
 
 ### Recommend
 
-- Git: if you do not have `git`, you can still download `.zip` file from [tldr-pages/tldr](https://github.com/tldr-pages/tldr), extract it, and add it to `repo_directory` config, most things still works, but `tldr --update` will NOT work.
+- Git: if you do not have `git`, you can still download `.zip` file from [tldr-pages/tldr](https://github.com/tldr-pages/tldr), extract it, and add it to `repo_directory` config, most things still work, but `tldr --update` will NOT work.
 
 ## Install
 
 ```bash
-python3 -m pip install multi-tldr
+python3 -m pip install -U multi-tldr
 ```
 
-## Usage
+## Initialize manually
 
-### Initialize by hand
+### Clone [tldr-pages/tldr](https://github.com/tldr-pages/tldr)
 
-First, clone the tldr pages repo to somewhere (e.g. `~/code/tldr`). We will use it when we look for a command usage.
+First, clone the [tldr-pages/tldr](https://github.com/tldr-pages/tldr) to somewhere (e.g. `~/code/tldr`). We will use it when we look for a command usage.
 
 ```bash
-cd ~/code
 git clone --depth=1 https://github.com/tldr-pages/tldr.git
 ```
 
-Then, create the configuration file, the default location for the configuration file is `~/.tldrrc.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
+### Create config file
 
-Run this command to generate configuration file:
+Then, run this command to interactively generate configuration file:
 
 ```bash
 tldr --init
@@ -88,16 +87,27 @@ Your configuration file should look like this:
 
 The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']`)
 
+The default location for the configuration file is `~/.tldrrc.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
 
-### Use tldr
+## Usage
 
-look for a command usage:
+You can run `tldr --help` to get the help message.
+
+### Look for a command usage
 
 ```bash
-tldr {{command}}
+tldr tar
 ```
 
-Check for updates (so that we can get the latest man pages):
+You can specify a platform using `-p` argument:
+
+```bash
+tldr -p osx airport
+```
+
+### Check for updates
+
+`git pull` will be run in all `repo_directory`, so that we can get the latest tldr pages
 
 ```console
 $ tldr --update
@@ -107,13 +117,19 @@ Check for updates in '/home/user/code/tldr-private' ...
 Already up to date.
 ```
 
-Locate all tldr page files path of the command:
+## Locate all tldr page files path of a command
 
 ```bash
 tldr --locate {{command}}
 ```
 
-Or you can use `tldr --help` to get the help message.
+## List all commands
+
+```bash
+tldr --list
+```
+
+It will output `json` format each line.
 
 ## FAQ
 
@@ -121,7 +137,7 @@ Or you can use `tldr --help` to get the help message.
 
 **Q: I want to add some custom command pages, how?**
 
-A: You can contribute to `tldr-pages/tldr`, or create your own repo, and add it to `repo_directory`.
+A: You can contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or create your own Git repo, or just create a private directory, and add it to `repo_directory`.
 
 **Q: I want a short command like `tldr COMMAND`, not `tldr find COMMAND`.**
 
