@@ -25,7 +25,7 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 - No need to rebuild index, or generate `index.json` file.
 - Support display multi repo and multi platform at the same time. You can create your own private tldr pages repo.
 - New feature: compact output, not output empty lines.
-- Modified parser: render `{{` and `}}` ([related issue](https://github.com/lord63/tldr.py/issues/25)), render `` ` `` inline code.
+- Advanced parser: render `{{` and `}}` ([related issue](https://github.com/lord63/tldr.py/issues/25)), render `` ` `` inline code.
 - Config file format `YAML` --> `JSON`, because I hate `YAML`.
 - Support tlgr pages in other languages, by specify `repo_directory` dir path to the `pages/` level.
 - Drop support for Python 2.
