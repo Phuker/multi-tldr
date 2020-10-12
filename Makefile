@@ -38,3 +38,6 @@ rebuild build dist/*.whl dist/*.tar.gz: ./setup.py ./tldr.py
 clean:
 	rm -rf *.egg-info build dist
 
+test:
+	$(PYTHON) ./test.py -vv
+
