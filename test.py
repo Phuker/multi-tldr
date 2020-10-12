@@ -68,11 +68,11 @@ class TldrPureFunctionTests(unittest.TestCase):
         config['platform'] = 'not_exist_os'
         self.assertRaises(AssertionError, tldr.check_config, config)
 
-    def test__get_escape_str(self):
-        self.assertEqual(tldr._get_escape_str(fg='red'), '\x1b[31m')
-        self.assertEqual(tldr._get_escape_str(fg='reset'), '\x1b[39m')
-        self.assertEqual(tldr._get_escape_str(reset=True), '\x1b[0m')
-        self.assertEqual(tldr._get_escape_str(), '')
+    def test_get_escape_str(self):
+        self.assertEqual(tldr.get_escape_str(fg='red'), '\x1b[31m')
+        self.assertEqual(tldr.get_escape_str(fg='reset'), '\x1b[39m')
+        self.assertEqual(tldr.get_escape_str(reset=True), '\x1b[0m')
+        self.assertEqual(tldr.get_escape_str(), '')
 
 
 class BasicTestCase(unittest.TestCase):
@@ -84,11 +84,11 @@ class TldrTests(BasicTestCase):
     def test_get_config(self):
         tldr.get_config()
     
-    def test_get_escape_str(self):
-        self.assertEqual(tldr.get_escape_str('description'), '\x1b[93m\x1b[24m')
-        self.assertEqual(tldr.get_escape_str('usage'), '\x1b[32m\x1b[24m')
-        self.assertEqual(tldr.get_escape_str('command'), '\x1b[37m\x1b[24m')
-        self.assertEqual(tldr.get_escape_str('param'), '\x1b[36m\x1b[4m')
+    def test_get_escape_str_by_type(self):
+        self.assertEqual(tldr.get_escape_str_by_type('description'), '\x1b[93m\x1b[24m')
+        self.assertEqual(tldr.get_escape_str_by_type('usage'), '\x1b[32m\x1b[24m')
+        self.assertEqual(tldr.get_escape_str_by_type('command'), '\x1b[37m\x1b[24m')
+        self.assertEqual(tldr.get_escape_str_by_type('param'), '\x1b[36m\x1b[4m')
     
     def test_parse_inline_md(self):
         line = 'usage 1 `command 1` usage 2 `command 2 {{param 1}}` usage 3 `command 3 {{param 2}} command 4` usage 4 `{{param 3}} command 5 end` usage 5 `{{param 4}}` usage 6 {{param 5 end}} usage 7 end'
@@ -103,47 +103,20 @@ class TldrTests(BasicTestCase):
     
     def test_get_index(self):
         result = [
-            {
-                'name': 'airport',
-                'platform': ['osx']
-            },
-            {
-                'name': 'du',
-                'platform': ['osx', 'linux']
-            },
-            {
-                'name': 'tcpflow',
-                'platform': ['linux']
-            },
-            {
-                'name': 'tldr-test',
-                'platform': ['common']
-            }
+            ('osx', 'airport'),
+            ('osx', 'du'),
+            ('linux', 'du'),
+            ('linux', 'tcpflow'),
+            ('common', 'tldr-test')
         ]
         repo_path = os.path.join(ROOT, 'tldr-pages-test', 'pages1')
-        self.assertEqual(tldr.get_index(repo_path), result)
+        self.assertEqual(sorted(tldr.get_index(repo_path)), sorted(result))
 
         result = [
-            {
-                'name': 'tldr-test',
-                'platform': ['common']
-            }
+            ('common', 'tldr-test'),
         ]
         repo_path = os.path.join(ROOT, 'tldr-pages-test', 'pages2')
-        self.assertEqual(tldr.get_index(repo_path), result)
-
-    def test_find_commands(self):
-        repo_path = os.path.join(ROOT, 'tldr-pages-test', 'pages1')
-        result_ok = ['airport', 'du', 'tcpflow', 'tldr-test']
-        result = tldr.find_commands(repo_path)
-        self.assertIsInstance(result, list)
-        self.assertEqual(sorted(result), sorted(result_ok))
-
-        repo_path = os.path.join(ROOT, 'tldr-pages-test', 'pages2')
-        result_ok = ['tldr-test']
-        result = tldr.find_commands(repo_path)
-        self.assertIsInstance(result, list)
-        self.assertEqual(sorted(result), sorted(result_ok))
+        self.assertEqual(sorted(tldr.get_index(repo_path)), sorted(result))
 
 
 if __name__ == "__main__":

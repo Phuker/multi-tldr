@@ -197,108 +197,55 @@ def parse_page(page_file_path):
 @functools.lru_cache
 def get_index(repo_directory):
     """Generate index in the pages directory.
-    Return:
-    {
-        str: set(str),
-    }
-    e.g.
-    {
-        'cmd1': {'common'},
-        'cmd2': {'common', 'linux'},
-    }
+    Return: [(platform, command), ]
     """
+
+    assert type(repo_directory) == str
 
     log = logging.getLogger(__name__)
 
-    assert type(repo_directory) == str
+    index = []
 
     log.debug('os.walk() in %r', repo_directory)
     tree_generator = os.walk(repo_directory)
     platforms = next(tree_generator)[1]
-    index = {}
+    
     for platform in platforms:
         pages = next(tree_generator)[2]
-        for page in pages:
-            command_name = os.path.splitext(page)[0]
-            if command_name not in index:
-                index[command_name] = set((platform, ))
-            else:
-                index[command_name].add(platform)
+        index += [(platform, os.path.splitext(page)[0]) for page in pages]
     
     return index
 
 
-def get_page_path_list_all(command=None, platform=PLATFORM_DEFAULT):
+def get_page_path_list(command=None, platform=PLATFORM_DEFAULT):
     """Get page_path_list in all repo"""
 
     assert command is None or type(command) == str
     assert type(platform) in (int, str)
 
-    class UniversalSet(set):
-        def __and__(self, other):
-            return other
-
-        def __rand__(self, other):
-            return other
-
     repo_directory_list = get_config()['repo_directory']
-    default_platform_list = get_config()['platform']
-    
-    if platform == PLATFORM_ALL:
-        platform_set = UniversalSet()
-    elif platform == PLATFORM_DEFAULT:
-        platform_set = set(default_platform_list)
-    else:
-        platform_set = set((platform, ))
+    default_platform_set = set(get_config()['platform'])
 
     page_path_list = []
     for repo_directory in repo_directory_list:
         index = get_index(repo_directory)
-        for c in index:
-            if command is None or command == c:
-                supported_platforms = index[c] & platform_set
-                for p in supported_platforms:
-                    page_path = os.path.join(repo_directory, p, c + '.md')
-                    page_path_list.append(page_path)
+
+        if command is not None:
+            filter_func = lambda entry: entry[1] == command
+            index = filter(filter_func, index)
+        
+        if platform == PLATFORM_ALL:
+            pass
+        elif platform == PLATFORM_DEFAULT:
+            index = filter(lambda entry: entry[0] in default_platform_set, index)
+        else:
+            index = filter(lambda entry: entry[0] == platform, index)
+
+        for entry in index:
+            page_path = os.path.join(repo_directory, entry[0], entry[1] + '.md')
+            page_path_list.append(page_path)
     
     return page_path_list
-
-
-def action_find(command, platform):
-    """Find and display the tldr pages of a command."""
-
-    assert type(command) == str
-    assert platform is None or type(platform) == str
-
-    log = logging.getLogger(__name__)
-
-    if platform:
-        page_path_list = get_page_path_list_all(command, platform)
-    else:
-        page_path_list = get_page_path_list_all(command, PLATFORM_DEFAULT)
-    
-    if len(page_path_list) == 0:
-        log.error("Command not found: %r", command)
-        log.error("You can file an issue or send a PR on github: https://github.com/tldr-pages/tldr")
-        sys.exit(1)
-    else:
-        for page_path in page_path_list:
-            output_lines = parse_page(page_path)
-            print(click.style(command + ' - ' + page_path, underline=True, bold=True))
-            print(''.join(output_lines))
-
-
-def action_update():
-    """Update all tldr pages repo."""
-
-    log = logging.getLogger(__name__)
-
-    repo_directory_list = get_config()['repo_directory']
-
-    for repo_directory in repo_directory_list:
-        os.chdir(repo_directory)
-        log.info("Check for updates in %r ...", repo_directory)
-        subprocess.call(['git', 'pull', '--stat'])
 
 
 def action_init():
@@ -356,6 +303,43 @@ def action_init():
         f.write(json.dumps(config, ensure_ascii=True, indent=4))
 
 
+def action_update():
+    """Update all tldr pages repo."""
+
+    log = logging.getLogger(__name__)
+
+    repo_directory_list = get_config()['repo_directory']
+
+    for repo_directory in repo_directory_list:
+        os.chdir(repo_directory)
+        log.info("Check for updates in %r ...", repo_directory)
+        subprocess.call(['git', 'pull', '--stat'])
+
+
+def action_find(command, platform):
+    """Find and display the tldr pages of a command."""
+
+    assert type(command) == str
+    assert platform is None or type(platform) == str
+
+    log = logging.getLogger(__name__)
+
+    if platform:
+        page_path_list = get_page_path_list(command, platform)
+    else:
+        page_path_list = get_page_path_list(command, PLATFORM_DEFAULT)
+    
+    if len(page_path_list) == 0:
+        log.error("Command not found: %r", command)
+        log.error("You can file an issue or send a PR on github: https://github.com/tldr-pages/tldr")
+        sys.exit(1)
+    else:
+        for page_path in page_path_list:
+            output_lines = parse_page(page_path)
+            print(click.style(command + ' - ' + page_path, underline=True, bold=True))
+            print(''.join(output_lines))
+
+
 def action_list_command(command, platform):
     """Locate all tldr page files path of the command."""
     
@@ -363,9 +347,9 @@ def action_list_command(command, platform):
     assert platform is None or type(platform) == str
 
     if platform:
-        page_path_list = get_page_path_list_all(command, platform)
+        page_path_list = get_page_path_list(command, platform)
     else:
-        page_path_list = get_page_path_list_all(command, PLATFORM_ALL)
+        page_path_list = get_page_path_list(command, PLATFORM_ALL)
     
     for page_path in page_path_list:
         try:
