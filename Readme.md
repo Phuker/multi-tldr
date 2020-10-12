@@ -2,7 +2,7 @@
 
 Yet another python client for [tldr-pages/tldr](https://github.com/tldr-pages/tldr). View tldr pages in multi repo, multi platform, any language at the same time.
 
-Forked and modified from [lord63/tldr.py](https://github.com/lord63/tldr.py), whose original idea is very good.
+Forked from [lord63/tldr.py](https://github.com/lord63/tldr.py), whose original idea is very good. Modified a large proportion of code.
 
 ## Intro
 
@@ -21,14 +21,15 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 
 ### Differences with `lord63/tldr.py`
 
-- No need to use `tldr find xxxxxx` or alias to `tldr find`, just type `tldr xxxxxx` ([related issue](https://github.com/lord63/tldr.py/issues/47))
-- No need to rebuild index, or generate `index.json` file.
+- No need to use `tldr find some_command` or alias to `tldr find`, just type `tldr some_command` ([related issue](https://github.com/lord63/tldr.py/issues/47))
+- No need to rebuild `index.json` index file.
 - Support display multi repo and multi platform at the same time. You can create your own private tldr pages repo.
 - New feature: compact output, not output empty lines.
-- Advanced parser: render `{{` and `}}` ([related issue](https://github.com/lord63/tldr.py/issues/25)), render `` ` `` inline code.
+- Advanced parser: render nested `` ` `` inline code, `{{` and `}}` arguments ([related issue](https://github.com/lord63/tldr.py/issues/25)).
 - Config file format `YAML` --> `JSON`, because I hate `YAML`.
-- Support tlgr pages in other languages, by specify `repo_directory` dir path to the `pages/` level.
+- Support tlgr pages in other languages, by specify repo dir path items in `repo_directory_list` to the `pages/` level.
 - Drop support for Python 2.
+- Simplify (just delete) tests code
 
 ## Requirements
 
@@ -36,7 +37,7 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 
 ### Recommend
 
-- Git: if you do not have `git`, you can still download `.zip` file from [tldr-pages/tldr](https://github.com/tldr-pages/tldr), extract it, and add it to `repo_directory` config, most things still work, but `tldr --update` will NOT work.
+- Git: if you do not have `git`, you can still download `.zip` file from [tldr-pages/tldr](https://github.com/tldr-pages/tldr), extract it, and add it when run `tldr --init`, most things still work, but `tldr --update` will NOT work.
 
 ## Install
 
@@ -66,7 +67,7 @@ Your configuration file should look like this:
 
 ```json
 {
-    "repo_directory": [
+    "repo_directory_list": [
         "/home/user/code/tldr/pages/",
         "/home/user/code/tldr-private/pages.zh"
     ],
@@ -76,7 +77,7 @@ Your configuration file should look like this:
         "command": "white",
         "param": "cyan"
     },
-    "platform": [
+    "platform_list": [
         "common",
         "osx",
         "linux"
@@ -87,13 +88,15 @@ Your configuration file should look like this:
 
 The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'`)
 
-The default location for the configuration file is `~/.tldrrc.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
+The default location for the configuration file is `~/.tldr.config.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
 
 ## Usage
 
 You can run `tldr --help` to get the help message.
 
 ### Look for a command usage
+
+Command on default platforms:
 
 ```bash
 tldr tar
@@ -107,7 +110,7 @@ tldr -p osx airport
 
 ### Check for updates
 
-`git pull` will be run in all `repo_directory`, so that we can get the latest tldr pages
+`git pull` will be run in all dir paths of `repo_directory_list`, so that we can get the latest tldr pages.
 
 ```console
 $ tldr --update
@@ -117,19 +120,21 @@ Check for updates in '/home/user/code/tldr-private' ...
 Already up to date.
 ```
 
-## Locate all tldr page files path of a command
+## List tldr page files path
 
-```bash
-tldr --locate {{command}}
-```
-
-## List all commands
+List all:
 
 ```bash
 tldr --list
 ```
 
-It will output `json` format each line.
+Specify a platform and/or a command:
+
+```bash
+tldr --list tar
+tldr --list -p linux
+tldr --list -p common du
+```
 
 ## FAQ
 
@@ -137,7 +142,7 @@ It will output `json` format each line.
 
 **Q: I want to add some custom command pages, how?**
 
-A: You can contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or create your own Git repo, or just create a private directory, and add it to `repo_directory`.
+A: You can contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or create your own Git repo, or just create a private directory, and add it to `repo_directory_list`.
 
 **Q: I want a short command like `tldr COMMAND`, not `tldr find COMMAND`.**
 
@@ -153,7 +158,7 @@ A: `tldr list | grep KEYWORD`
 
 **Q: I don't like the default color theme, how to change it?**
 
-A: Edit the tldr configuration file at `~/.tldrrc.json`; modify the color until you're happy with it.
+A: Edit the tldr configuration file at `~/.tldr.config.json`; modify the color until you're happy with it.
 
 **Q: I faided to update the tldr pages, why?**
 

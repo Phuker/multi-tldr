@@ -48,8 +48,8 @@ def get_config_path():
 def check_config(config):
     assert type(config) == dict, 'type(config) != dict'
     assert type(config['colors']) == dict, 'type(colors) != dict'
-    assert type(config['platform']) == list, 'type(platform) != list'
-    assert type(config['repo_directory']) == list, 'type(repo_directory) != list'
+    assert type(config['platform_list']) == list, 'type(platform_list) != list'
+    assert type(config['repo_directory_list']) == list, 'type(repo_directory_list) != list'
     assert type(config['compact_output']) == bool, 'type(compact_output) != bool'
 
     supported_colors = ('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white')
@@ -58,11 +58,11 @@ def check_config(config):
         bad_colors_str = ', '.join([repr(_) for _ in bad_colors])
         raise ValueError(f'Unsupported colors in config file: {bad_colors_str}')
 
-    for platform in config['platform']:
-        assert type(platform) == str, f'Bad platform value: {platform!r}'
+    for platform in config['platform_list']:
+        assert type(platform) == str, f'Bad platform_list item: {platform!r}'
     
-    for _repo_dir in config['repo_directory']:
-        assert type(_repo_dir) == str, f'Bad repo dir value: {_repo_dir!r}'
+    for _repo_dir in config['repo_directory_list']:
+        assert type(_repo_dir) == str, f'Bad repo_directory_list item: {_repo_dir!r}'
         if not os.path.exists(_repo_dir):
             raise ValueError(f"tldr repo dir not exist: {_repo_dir!r}")
 
@@ -223,8 +223,8 @@ def get_page_path_list(command=None, platform=PLATFORM_DEFAULT):
     assert command is None or type(command) == str
     assert type(platform) in (int, str)
 
-    repo_directory_list = get_config()['repo_directory']
-    default_platform_set = set(get_config()['platform'])
+    repo_directory_list = get_config()['repo_directory_list']
+    default_platform_set = set(get_config()['platform_list'])
 
     page_path_list = []
     for repo_directory in repo_directory_list:
@@ -292,9 +292,9 @@ def action_init():
     compact_output = click.prompt('Enable compact output (not output empty lines)? (yes/no)', default='no') == 'yes'
 
     config = {
-        "repo_directory": repo_path_list,
+        "repo_directory_list": repo_path_list,
         "colors": colors,
-        "platform": platform_list,
+        "platform_list": platform_list,
         "compact_output": compact_output,
     }
 
@@ -308,7 +308,7 @@ def action_update():
 
     log = logging.getLogger(__name__)
 
-    repo_directory_list = get_config()['repo_directory']
+    repo_directory_list = get_config()['repo_directory_list']
 
     for repo_directory in repo_directory_list:
         os.chdir(repo_directory)
@@ -375,7 +375,7 @@ def parse_args():
     )
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument('--init', action="store_true", help="Interactively gererate config file")
-    group.add_argument('--list', action='store_true', help="Print all tldr page files path of a command if specified in all repo on all platform")
+    group.add_argument('--list', action='store_true', help="Print all tldr page files path (of a command if specified) in all repo on all/specified platform")
     group.add_argument('--update', action="store_true", help="Pull all git repo")
     
     parser.add_argument('command', help="Command to query", nargs='?')
@@ -390,7 +390,7 @@ def parse_args():
         args.version,
         args.init and args.command is None and args.platform is None,
         args.list,
-        args.update and args.command is not None and args.platform is None,
+        args.update and args.command is None and args.platform is None,
         not ctrl_group_set and args.command is not None,
     ]
 
