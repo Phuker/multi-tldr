@@ -17,7 +17,7 @@ import json
 import logging
 import argparse
 import subprocess
-from operator import itemgetter
+import functools
 
 import click
 
@@ -29,13 +29,12 @@ __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2020 Phuker, Copyright (c) 2015 lord63"
 
+PLATFORM_DEFAULT = 0
+PLATFORM_ALL = 1
 
 if sys.flags.optimize > 0:
     print('Error: Do not run with "-O", assert require no optimize', file=sys.stderr)
     sys.exit(1)
-
-
-_cache = {}
 
 
 def get_config_path():
@@ -68,16 +67,23 @@ def check_config(config):
             raise ValueError(f"tldr repo dir not exist: {_repo_dir!r}")
 
 
+def load_json(file_path):
+    log = logging.getLogger(__name__)
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            result = json.load(f)
+            return result
+    except Exception as e:
+        log.error('Error when load json file %r: %r %r', file_path, type(e), e)
+        sys.exit(1)
+
+
+@functools.lru_cache
 def get_config():
     """Get the configurations and return it as a dict."""
 
     log = logging.getLogger(__name__)
-
-    cache_key = 'config'
-    cache_value = _cache.get(cache_key, None)
-    if cache_value is not None:
-        log.debug('Cache hit: %r', cache_key)
-        return cache_value
 
     config_path = get_config_path()
     if not os.path.exists(config_path):
@@ -85,24 +91,18 @@ def get_config():
         sys.exit(1)
 
     log.debug('Reading file: %r', config_path)
-    with open(config_path, 'r', encoding='utf-8') as f:
-        try:
-            config = json.load(f)
-        except Exception as e:
-            log.error('Error when load config file %r: %r %r', config_path, type(e), e)
-            sys.exit(1)
+    config = load_json(config_path)
 
     try:
         check_config(config)
+        return config
     except Exception as e:
         log.error('Check config failed: %r', e)
         sys.exit(1)
 
-    _cache[cache_key] = config
-    return config
 
-
-def _get_escape_str(*args, **kwargs):
+@functools.lru_cache
+def get_escape_str(*args, **kwargs):
     """Wrapper of click.style(), get escape string without reset string at the end"""
 
     if 'reset' not in kwargs:
@@ -110,15 +110,16 @@ def _get_escape_str(*args, **kwargs):
     return click.style('', *args, **kwargs)
 
 
-def get_escape_str(_type):
+@functools.lru_cache
+def get_escape_str_by_type(_type):
     """Get escape string by type"""
 
     colors = get_config()['colors']
 
     if _type in ('description', 'usage', 'command'):
-        return _get_escape_str(fg=colors[_type], underline=False)
+        return get_escape_str(fg=colors[_type], underline=False)
     elif _type == 'param':
-        return _get_escape_str(fg=colors[_type], underline=True)
+        return get_escape_str(fg=colors[_type], underline=True)
     else:
         raise ValueError(f'Unexpected type: {_type!r}')
 
@@ -131,28 +132,28 @@ def parse_inline_md(line, line_type):
     code_started = False
     result = ''
     
-    result += get_escape_str(line_type)
+    result += get_escape_str_by_type(line_type)
     type_stack = [line_type]
     for item in line_list:
         if item == '`':
             if not code_started:
-                result += get_escape_str('command')
+                result += get_escape_str_by_type('command')
                 type_stack.append('command')
             else:
                 type_stack.pop()
-                result += get_escape_str(type_stack[-1])
+                result += get_escape_str_by_type(type_stack[-1])
             
             code_started = not code_started
         elif item == '{{':
-            result += get_escape_str('param')
+            result += get_escape_str_by_type('param')
             type_stack.append('param')
         elif item == '}}':
             type_stack.pop()
-            result += get_escape_str(type_stack[-1])
+            result += get_escape_str_by_type(type_stack[-1])
         else:
             result += item
     
-    result += click.style('') # reset
+    result += get_escape_str(reset=True)
     return result
 
 
@@ -166,8 +167,6 @@ def parse_page(page_file_path):
     log.debug('Reading file: %r', page_file_path)
     with open(page_file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines() # with '\n' end
-    
-    log.debug('Lines: %r', lines)
     
     output_lines = []
     for line in lines:
@@ -195,105 +194,88 @@ def parse_page(page_file_path):
     return output_lines
 
 
+@functools.lru_cache
 def get_index(repo_directory):
-    """Generate index in the pages directory."""
+    """Generate index in the pages directory.
+    Return:
+    {
+        str: set(str),
+    }
+    e.g.
+    {
+        'cmd1': {'common'},
+        'cmd2': {'common', 'linux'},
+    }
+    """
 
     log = logging.getLogger(__name__)
 
     assert type(repo_directory) == str
 
-    cache_key = 'index_' + repo_directory
-    cache_value = _cache.get(cache_key, None)
-    if cache_value is not None:
-        log.debug('Cache hit: %r', cache_key)
-        return cache_value
-
-    page_path = repo_directory
-
-    log.debug('os.walk() in %r', page_path)
-    tree_generator = os.walk(page_path)
-    folders = next(tree_generator)[1]
-    commands, index = {}, {}
-    for folder in folders:
+    log.debug('os.walk() in %r', repo_directory)
+    tree_generator = os.walk(repo_directory)
+    platforms = next(tree_generator)[1]
+    index = {}
+    for platform in platforms:
         pages = next(tree_generator)[2]
         for page in pages:
             command_name = os.path.splitext(page)[0]
-            if command_name not in commands:
-                commands[command_name] = {
-                    'name': command_name,
-                    'platform': [folder]
-                }
+            if command_name not in index:
+                index[command_name] = set((platform, ))
             else:
-                commands[command_name]['platform'].append(folder)
+                index[command_name].add(platform)
     
-    command_list = [item[1] for item in sorted(commands.items(), key=itemgetter(0))]
-    index['commands'] = command_list
-    
-    _cache[cache_key] = index
     return index
 
 
-def find_commands(repo_directory):
-    """List commands in the pages directory."""
-    
-    assert type(repo_directory) == str
+def get_page_path_list_all(command=None, platform=PLATFORM_DEFAULT):
+    """Get page_path_list in all repo"""
 
-    index = get_index(repo_directory)
-    return [item['name'] for item in index['commands']]
+    assert command is None or type(command) == str
+    assert type(platform) in (int, str)
 
+    class UniversalSet(set):
+        def __and__(self, other):
+            return other
 
-def find_commands_on_specified_platform(repo_directory, specified_platform):
-    """List commands on the specified platform"""
+        def __rand__(self, other):
+            return other
 
-    assert type(repo_directory) == str
-    assert specified_platform is None or type(specified_platform) == str
-
+    repo_directory_list = get_config()['repo_directory']
     default_platform_list = get_config()['platform']
-
-    index = get_index(repo_directory)
-
-    platform_list = ([specified_platform] if specified_platform else default_platform_list)
-
-    return [item['name'] for item in index['commands'] if [_ for _ in platform_list if _ in item['platform']]]
-
-
-def find_page_location(command, platform_list, repo_directory):
-    assert type(platform_list) == list
-    assert type(repo_directory) == str
-
-    index = get_index(repo_directory)
-    command_list = find_commands(repo_directory)
-
-    if command not in command_list:
-        return []
-
-    supported_platforms = index['commands'][command_list.index(command)]['platform']
+    
+    if platform == PLATFORM_ALL:
+        platform_set = UniversalSet()
+    elif platform == PLATFORM_DEFAULT:
+        platform_set = set(default_platform_list)
+    else:
+        platform_set = set((platform, ))
 
     page_path_list = []
-    for platform in platform_list:
-        if platform in supported_platforms:
-            page_path = os.path.join(repo_directory, os.path.join(platform, command + '.md'))
-            page_path_list.append(page_path)
+    for repo_directory in repo_directory_list:
+        index = get_index(repo_directory)
+        for c in index:
+            if command is None or command == c:
+                supported_platforms = index[c] & platform_set
+                for p in supported_platforms:
+                    page_path = os.path.join(repo_directory, p, c + '.md')
+                    page_path_list.append(page_path)
     
     return page_path_list
 
 
-def find(command, platform):
+def action_find(command, platform):
     """Find and display the tldr pages of a command."""
+
+    assert type(command) == str
+    assert platform is None or type(platform) == str
 
     log = logging.getLogger(__name__)
 
-    repo_directory_list = get_config()['repo_directory']
-    default_platform_list = get_config()['platform']
-
     if platform:
-        platform_list = [platform]
+        page_path_list = get_page_path_list_all(command, platform)
     else:
-        platform_list = default_platform_list
-
-    page_path_list = []
-    for repo_directory in repo_directory_list:
-        page_path_list += find_page_location(command, platform_list, repo_directory)
+        page_path_list = get_page_path_list_all(command, PLATFORM_DEFAULT)
     
     if len(page_path_list) == 0:
         log.error("Command not found: %r", command)
@@ -306,7 +288,7 @@ def find(command, platform):
             print(''.join(output_lines))
 
 
-def update():
+def action_update():
     """Update all tldr pages repo."""
 
     log = logging.getLogger(__name__)
@@ -319,8 +301,8 @@ def update():
         subprocess.call(['git', 'pull', '--stat'])
 
 
-def init():
-    """Init config file."""
+def action_init():
+    """Interactively gererate config file"""
 
     log = logging.getLogger(__name__)
 
@@ -374,33 +356,29 @@ def init():
         f.write(json.dumps(config, ensure_ascii=True, indent=4))
 
 
-def locate(command, platform):
+def action_list_command(command, platform):
     """Locate all tldr page files path of the command."""
-
-    repo_directory_list = get_config()['repo_directory']
-    default_platform_list = get_config()['platform']
+    
+    assert command is None or type(command) == str
+    assert platform is None or type(platform) == str
 
     if platform:
-        platform_list = [platform]
+        page_path_list = get_page_path_list_all(command, platform)
     else:
-        platform_list = default_platform_list
-
-    page_path_list = []
-    for repo_directory in repo_directory_list:
-        page_path_list += find_page_location(command, platform_list, repo_directory)
+        page_path_list = get_page_path_list_all(command, PLATFORM_ALL)
     
     for page_path in page_path_list:
-        print(page_path)
+        try:
+            print(page_path)
+        except BrokenPipeError:
+            sys.exit()
 
 
-def list_command(platform): # do NOT name 'list', conflict with keyword
-    """List all commands (on a specific platform if specified)."""
-
-    repo_directory_list = get_config()['repo_directory']
-    for repo_directory in repo_directory_list:
-        command_list = find_commands_on_specified_platform(repo_directory, platform)
-        command_list_output = [json.dumps([repo_directory, item]) for item in command_list]
-        print('\n'.join(command_list_output))
+def action_version():
+    print(f'{__title__}')
+    print(f'Version: {__version__}')
+    print(f'By {__author__}')
+    print(f'{__homepage__}')
 
 
 def parse_args():
@@ -412,24 +390,28 @@ def parse_args():
         add_help=True
     )
     group = parser.add_mutually_exclusive_group(required=False)
-    group.add_argument('--init',  action="store_true", help="Gererate config file")
-    group.add_argument('--locate', metavar='command', help="Locate all tldr page files path of a command")
-    group.add_argument('--list',  action="store_true", help="Print command list")
-    group.add_argument('--update',  action="store_true", help="Pull all git repo")
+    group.add_argument('--init', action="store_true", help="Interactively gererate config file")
+    group.add_argument('--list', action='store_true', help="Print all tldr page files path of a command if specified in all repo on all platform")
+    group.add_argument('--update', action="store_true", help="Pull all git repo")
     
     parser.add_argument('command', help="Command to query", nargs='?')
-    parser.add_argument('-V', '--version',  action="store_true", help="Show version and exit")
     parser.add_argument('-p', '--platform', help='Specify platform', choices=['common', 'linux', 'osx', 'sunos', 'windows'])
+
+    parser.add_argument('-V', '--version', action="store_true", help="Show version and exit")
 
     args = parser.parse_args()
 
-    ctrl_group_set = args.init or args.locate is not None or args.list or args.update or args.version
-    if ctrl_group_set and args.command is not None:
-        log.error('No need argument: command')
-        parser.print_help()
-        sys.exit(1)
-    if not ctrl_group_set and args.command is None:
-        log.error('Need argument: command')
+    ctrl_group_set = args.init or args.list or args.update
+    ok_conditions = [
+        args.version,
+        args.init and args.command is None and args.platform is None,
+        args.list,
+        args.update and args.command is not None and args.platform is None,
+        not ctrl_group_set and args.command is not None,
+    ]
+
+    if not any(ok_conditions):
+        log.error('Bad arguments')
         parser.print_help()
         sys.exit(1)
     
@@ -437,12 +419,12 @@ def parse_args():
 
 
 def init_logging():
-    escape_bold = _get_escape_str(bold=True)
-    escape_reset = _get_escape_str(reset=True)
-    escape_fg_default = _get_escape_str(fg='reset')
-    escape_fg_red = _get_escape_str(fg='red')
-    escape_fg_yellow = _get_escape_str(fg='yellow')
-    escape_fg_cyan = _get_escape_str(fg='cyan')
+    escape_bold = get_escape_str(bold=True)
+    escape_reset = get_escape_str(reset=True)
+    escape_fg_default = get_escape_str(fg='reset')
+    escape_fg_red = get_escape_str(fg='red')
+    escape_fg_yellow = get_escape_str(fg='yellow')
+    escape_fg_cyan = get_escape_str(fg='cyan')
 
     logging_stream = sys.stderr
     logging_format = f'{escape_bold}%(asctime)s [%(levelname)s]:{escape_reset}%(message)s'
@@ -479,17 +461,16 @@ def cli():
     args = parse_args()
 
     if args.version:
-        print(f'{__title__}\nVersion: {__version__}\nBy {__author__}\n{__homepage__}')
+        action_version()
     elif args.init:
-        init()
-    elif args.locate:
-        locate(args.locate, args.platform)
+        action_init()
     elif args.list:
-        list_command(args.platform)
+        action_list_command(args.command, args.platform)
     elif args.update:
-        update()
+        action_update()
     else:
-        find(args.command, args.platform)
+        action_find(args.command, args.platform)
+
 
 if __name__ == "__main__":
     cli()

@@ -1,25 +1,23 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+# encoding: utf-8
 
-from __future__ import absolute_import
+import unittest.mock
 
-import mock
-
-from tldr.config import get_config
+from tldr import get_config
 from basic import BasicTestCase
 
 
 class TestConfig(BasicTestCase):
     def test_config_not_exist(self):
-        with mock.patch('os.path.exists', side_effect=[False, True]):
+        with unittest.mock.patch('os.path.exists', side_effect=[False, True]):
             self._assert_exception_message(
                 ("Can't find config file at: {0}. You may use `tldr init` to "
                  "init the config file.").format(self.config_path)
             )
 
     def test_invalid_yaml_file(self):
-        with mock.patch('io.open',
-                        mock.mock_open(read_data="%YAML:1.0\nname:jhon")):
+        with unittest.mock.patch('io.open',
+                        unittest.mock.mock_open(read_data="%YAML:1.0\nname:jhon")):
             self._assert_exception_message(
                 "The config file is not a valid YAML file."
             )
@@ -34,13 +32,13 @@ class TestConfig(BasicTestCase):
             'platform': 'linux',
             'repo_directory': self.repo_dir
         }
-        with mock.patch('yaml.safe_load', return_value=mock_config):
+        with unittest.mock.patch('yaml.safe_load', return_value=mock_config):
             self._assert_exception_message(
                 "Unsupported colors in config file: indigo."
             )
 
     def test_repo_directory_not_exist(self):
-        with mock.patch('os.path.exists', side_effect=[True, False]):
+        with unittest.mock.patch('os.path.exists', side_effect=[True, False]):
             self._assert_exception_message(
                 "Can't find the tldr repo, check the `repo_directory` "
                 "setting in config file."

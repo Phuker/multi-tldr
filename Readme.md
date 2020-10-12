@@ -145,7 +145,7 @@ A: This problem not exists any more.
 
 **Q: Do I need to rebuild any index after `git pull` or create new `.md` files?**
 
-A: You don't any more. Local file is fast enough, and I added a cache variable.
+A: You don't any more. Local file is fast enough, and I added a cache decorator.
 
 **Q: I want fuzzy find command usage.**
 

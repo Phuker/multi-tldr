@@ -1,20 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+# encoding: utf-8
 
-from __future__ import absolute_import
-
-import io
 import os
-from os import path
-
-import yaml
+import json
 
 from basic import BasicTestCase
 
 
 class TestInit(BasicTestCase):
     def test_init(self):
-        assert path.exists(self.config_path)
+        assert os.path.exists(self.config_path)
 
         expected_config = {
             'colors': {
@@ -25,8 +20,8 @@ class TestInit(BasicTestCase):
             'platform': 'linux',
             'repo_directory': self.repo_dir
         }
-        with io.open(self.config_path, encoding='utf-8') as f:
-            config = yaml.safe_load(f)
+        with open(self.config_path, encoding='utf-8') as f:
+            config = json.load(f)
         assert expected_config == config
 
     def test_wrong_platform_input(self):

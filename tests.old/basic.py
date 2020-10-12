@@ -1,38 +1,36 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 
 import os
-from os import path
 import unittest
+import unittest.mock
 
-from click.testing import CliRunner
 from tldr import cli
-import mock
 
 
-ROOT = path.dirname(path.realpath(__file__))
+ROOT = os.path.dirname(os.path.realpath(__file__))
 
 
 class BasicTestCase(unittest.TestCase):
     def setUp(self):
-        self.repo_dir = path.join(ROOT, 'mock_tldr')
-        self.config_path = path.join(self.repo_dir, '.tldrrc.json')
+        self.repo_dir = os.path.join(ROOT, 'mock_tldr')
+        self.config_path = os.path.join(self.repo_dir, '.tldrrc.json')
         os.environ['TLDR_CONFIG_DIR'] = self.repo_dir
         self.runner = CliRunner()
         self.call_init_command()
 
     def tearDown(self):
-        if path.exists(self.config_path):
+        if os.path.exists(self.config_path):
             os.remove(self.config_path)
 
-    def call_init_command(self, repo_dir=path.join(ROOT, 'mock_tldr'),
+    def call_init_command(self, repo_dir=os.path.join(ROOT, 'mock_tldr'),
                           platform='linux'):
-        with mock.patch('click.prompt', side_effect=[repo_dir, platform]):
+        with unittest.mock.patch('click.prompt', side_effect=[repo_dir, platform]):
             result = self.runner.invoke(cli.init)
         return result
 
     def call_update_command(self):
-        with mock.patch('tldr.cli.build_index', return_value=None):
+        with unittest.mock.patch('tldr.cli.build_index', return_value=None):
             result = self.runner.invoke(cli.update)
         return result
 

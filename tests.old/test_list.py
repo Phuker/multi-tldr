@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import
+#!/usr/bin/env python3
+# encoding: utf-8
 
 from basic import BasicTestCase
 
