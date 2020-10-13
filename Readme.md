@@ -59,7 +59,7 @@ print('Test ANSI escape sequences: \x1b[31mred \x1b[1mbold\x1b[0m')
 print(f'git command is: {shutil.which("git")!r}')
 ```
 
-If you are using Windows 10, you can import this to the Windows Registry to enable color output of `cmd` and `PowerShell`:
+If you are using Windows 10, you can import this to the Windows Registry to enable color output of `cmd` and `PowerShell` ([related discussions](https://superuser.com/questions/413073/windows-console-with-ansi-colors-handling)):
 
 ```registry
 Windows Registry Editor Version 5.00

@@ -97,6 +97,8 @@ def check_config(config):
 
 
 def load_json(file_path):
+    assert type(file_path) == str
+
     log = logging.getLogger(__name__)
 
     try:
@@ -161,9 +163,13 @@ def get_escape_str(*args, **kwargs):
 def get_escape_str_by_type(_type):
     """Get escape string by type"""
 
+    assert _type is None or type(_type) == str
+
     colors = get_config()['colors']
 
-    if _type in ('description', 'usage', 'command'):
+    if _type is None:
+        return ''
+    elif _type in ('description', 'usage', 'command'):
         return get_escape_str(fg=colors[_type], underline=False)
     elif _type == 'param':
         return get_escape_str(fg=colors[_type], underline=True)
@@ -180,7 +186,8 @@ def parse_inline_md(line, line_type):
     result = ''
     
     result += get_escape_str_by_type(line_type)
-    type_stack = [line_type]
+    type_stack = [None] * 8 # fail safe, for invalid line like '- abc {def}} ghi'
+    type_stack.append(line_type)
     for item in line_list:
         if item == '`':
             if not code_started:
@@ -260,7 +267,7 @@ def get_index(repo_directory):
     
     for platform in platforms:
         pages = next(tree_generator)[2]
-        index += [(platform, os.path.splitext(page)[0]) for page in pages]
+        index += [(platform, page[:-3]) for page in pages if page.endswith('.md')] # there is no .MD uppercase
     
     return index
 
