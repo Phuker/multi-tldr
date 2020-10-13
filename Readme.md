@@ -95,9 +95,25 @@ The default location for the configuration file is `~/.tldr.config.json`, you ca
 
 ### For Windows users
 
-A better terminal is recommended.
+A better terminal is recommended, which must support [ANSI escape sequences](https://en.wikipedia.org/wiki/ANSI_escape_code), and make sure `git` command is available. Try (combine) these: [Cmder](https://cmder.net/), [Cygwin](https://www.cygwin.com/), [Windows Terminal](https://github.com/microsoft/terminal), [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10), [Git for Windows](https://gitforwindows.org/), [scoop](https://github.com/lukesampson/scoop), [Chocolatey](https://chocolatey.org/), etc.
 
-If you are using `cmd.exe`, you can import this to the Windows Registry:
+Test your environment with Python 3:
+
+```python
+#!/usr/bin/env python3
+# encoding: utf-8
+
+import os
+import sys
+import shutil
+
+print(f'sys.stdout.isatty() -> {sys.stdout.isatty()}')
+print(f'env TERM = {os.environ.get("TERM")!r}')
+print('Test ANSI escape sequences: \x1b[31mred \x1b[1mbold\x1b[0m')
+print(f'git command is: {shutil.which("git")!r}')
+```
+
+If you are using Windows 10, you can import this to the Windows Registry to enable color output of `cmd` and `PowerShell`:
 
 ```registry
 Windows Registry Editor Version 5.00
@@ -106,7 +122,7 @@ Windows Registry Editor Version 5.00
 "VirtualTerminalLevel"=dword:00000001
 ```
 
-And set `color_output` in the config file to `always`.
+If output is not colored, try set `color_output` in the config file to `always`.
 
 ## Usage
 
