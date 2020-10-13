@@ -16,18 +16,18 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 
 ## Features
 
-- Use local file, fast and no network delay. tldr pages are managed and updated by `git`.
+- Use local file, fast without network delay. tldr pages are managed and updated by `git`.
 - Support custom output color.
 
 ### Differences with `lord63/tldr.py`
 
-- No need to use `tldr find some_command` or alias to `tldr find`, just type `tldr some_command` ([related issue](https://github.com/lord63/tldr.py/issues/47))
+- No need to use `tldr find some_command` or create an alias of `tldr find`, just type `tldr some_command` ([related issue](https://github.com/lord63/tldr.py/issues/47))
 - No need to rebuild `index.json` index file.
 - Support display multi repo and multi platform at the same time. You can create your own private tldr pages repo.
+- Support display tlgr pages in any languages, by specify repo dir path items in `repo_directory_list` to the `pages/` level.
 - New feature: compact output, not output empty lines.
 - Advanced parser: render nested `` ` `` inline code, `{{` and `}}` arguments ([related issue](https://github.com/lord63/tldr.py/issues/25)).
 - Config file format `YAML` --> `JSON`, because I hate `YAML`.
-- Support tlgr pages in other languages, by specify repo dir path items in `repo_directory_list` to the `pages/` level.
 - Drop support for Python 2.
 - Simplify (just delete) tests code
 
@@ -40,6 +40,8 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 - Git: if you do not have `git`, you can still download `.zip` file from [tldr-pages/tldr](https://github.com/tldr-pages/tldr), extract it, and add it when run `tldr --init`, most things still work, but `tldr --update` will NOT work.
 
 ## Install
+
+Use `pip` to install:
 
 ```bash
 python3 -m pip install -U multi-tldr
@@ -71,6 +73,7 @@ Your configuration file should look like this:
         "/home/user/code/tldr/pages/",
         "/home/user/code/tldr-private/pages.zh"
     ],
+    "color_output": "auto",
     "colors": {
         "description": "bright_yellow",
         "usage": "green",
@@ -90,13 +93,28 @@ The `colors` option is for the output when you look for a command, you can custo
 
 The default location for the configuration file is `~/.tldr.config.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
 
+### For Windows users
+
+A better terminal is recommended.
+
+If you are using `cmd.exe`, you can import this to the Windows Registry:
+
+```registry
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Console]
+"VirtualTerminalLevel"=dword:00000001
+```
+
+And set `color_output` in the config file to `always`.
+
 ## Usage
 
 You can run `tldr --help` to get the help message.
 
 ### Look for a command usage
 
-Command on default platforms:
+By default, only pages in `platform_list` are output:
 
 ```bash
 tldr tar
@@ -120,7 +138,7 @@ Check for updates in '/home/user/code/tldr-private' ...
 Already up to date.
 ```
 
-## List tldr page files path
+### List tldr page files path
 
 List all:
 
@@ -154,7 +172,7 @@ A: You don't any more. Local file is fast enough, and I added a cache decorator.
 
 **Q: I want fuzzy find command usage.**
 
-A: `tldr list | grep KEYWORD`
+A: `tldr --list | grep KEYWORD`
 
 **Q: I don't like the default color theme, how to change it?**
 
@@ -162,11 +180,11 @@ A: Edit the tldr configuration file at `~/.tldr.config.json`; modify the color u
 
 **Q: I faided to update the tldr pages, why?**
 
-A: Actually, `tldr.py` just tries to pull the latest tldr pages for you, no magic behinds it. So the reason why you faided to update is that `tldr.py` failed to pull the latest upstream, check the failing output and you may know the reason, e.g. you make some changes and haven't commit them yet. You can pull the pages by hand so you can have a better control on it.
+A: Actually, This program just tries to pull the latest tldr pages for you, no magic behinds it. So the reason why you faided to update is that this program failed to pull the latest upstream, check the failing output and you may know the reason, e.g. you make some changes and haven't commit them yet. You can pull the pages by hand so you can have a better control on it.
 
 **Q: Why use the git repo instead of the assets packaged by the official?**
 
-A: In fact, you can use the offical assets if you want, download the assets and extract it somewhere, but `tldr.py` don't support update it using `tldr update`.
+A: In fact, you can use the offical assets if you want, download the assets and extract it somewhere, but this program don't support update it using `tldr --update`.
 
 Use a `git` repo, you can:
 

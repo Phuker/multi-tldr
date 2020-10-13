@@ -23,7 +23,7 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.11.1"
+__version__ = "0.12.0"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
@@ -38,7 +38,7 @@ if sys.flags.optimize > 0:
 
 
 def get_config_path():
-    config_dir_path = os.environ.get('TLDR_CONFIG_DIR') or '~'
+    config_dir_path = os.environ.get('TLDR_CONFIG_DIR', '~')
     config_dir_path = os.path.abspath(os.path.expanduser(config_dir_path))
     config_path = os.path.join(config_dir_path, '.tldr.config.json')
 
@@ -47,11 +47,15 @@ def get_config_path():
 
 def check_config(config):
     assert type(config) == dict, 'type(config) != dict'
+    assert type(config['color_output']) == str, 'type(color_output) != str'
     assert type(config['colors']) == dict, 'type(colors) != dict'
     assert type(config['platform_list']) == list, 'type(platform_list) != list'
     assert type(config['repo_directory_list']) == list, 'type(repo_directory_list) != list'
     assert type(config['compact_output']) == bool, 'type(compact_output) != bool'
 
+    supported_color_output = ('always', 'auto', 'never')
+    assert config['color_output'] in supported_color_output
+    
     supported_colors = ('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white')
     if not set(config['colors'].values()).issubset(set(supported_colors)):
         bad_colors = set(config['colors'].values()) - set(supported_colors)
@@ -59,12 +63,12 @@ def check_config(config):
         raise ValueError(f'Unsupported colors in config file: {bad_colors_str}')
 
     for platform in config['platform_list']:
-        assert type(platform) == str, f'Bad platform_list item: {platform!r}'
+        assert type(platform) == str, f'Bad item in platform_list: {platform!r}'
     
     for _repo_dir in config['repo_directory_list']:
-        assert type(_repo_dir) == str, f'Bad repo_directory_list item: {_repo_dir!r}'
+        assert type(_repo_dir) == str, f'Bad item in repo_directory_list: {_repo_dir!r}'
         if not os.path.exists(_repo_dir):
-            raise ValueError(f"tldr repo dir not exist: {_repo_dir!r}")
+            raise ValueError(f"Path in repo_directory_list not exist: {_repo_dir!r}")
 
 
 def load_json(file_path):
@@ -87,7 +91,8 @@ def get_config():
 
     config_path = get_config_path()
     if not os.path.exists(config_path):
-        log.error("Can't find config file at: %r. You may use `tldr --init` to init the config file.", config_path)
+        log.error("Can't find config file at: %r.", config_path)
+        log.error('You may use `tldr --init` to init the config file.')
         sys.exit(1)
 
     log.debug('Reading file: %r', config_path)
@@ -97,17 +102,34 @@ def get_config():
         check_config(config)
         return config
     except Exception as e:
-        log.error('Check config failed: %r', e)
+        log.error('Check config failed: %r.', e)
+        log.error('You may use `tldr --init` to init the config file.')
         sys.exit(1)
+
+
+def style(text, *args, **kwargs):
+    """Wrapper of click.style()"""
+
+    color_output = get_config()['color_output']
+
+    if color_output == 'always':
+        return click.style(text, *args, **kwargs)
+    elif color_output == 'auto':
+        if sys.stdout.isatty() and 'TERM' in os.environ:
+            return click.style(text, *args, **kwargs)
+        else:
+            return text
+    else: # 'never'
+        return text
 
 
 @functools.lru_cache
 def get_escape_str(*args, **kwargs):
-    """Wrapper of click.style(), get escape string without reset string at the end"""
+    """Wrapper of style(), get escape string without reset string at the end"""
 
     if 'reset' not in kwargs:
         kwargs['reset'] = False
-    return click.style('', *args, **kwargs)
+    return style('', *args, **kwargs)
 
 
 @functools.lru_cache
@@ -184,10 +206,11 @@ def parse_page(page_file_path):
             line = '    ' + line + '\n'
             output_lines.append(line)
         elif line.startswith("\n"): # empty line
-            if compact_output:
-                pass
+            if not compact_output:
+                # default: reset = True, add reset string at the end
+                output_lines.append(style(line))
             else:
-                output_lines.append(click.style(line)) # default: reset = True
+                pass
         else:
             line = parse_inline_md(line, 'usage')
             output_lines.append(line)
@@ -241,9 +264,7 @@ def get_page_path_list(command=None, platform=PLATFORM_DEFAULT):
         else:
             index = filter(lambda entry: entry[0] == platform, index)
 
-        for entry in index:
-            page_path = os.path.join(repo_directory, entry[0], entry[1] + '.md')
-            page_path_list.append(page_path)
+        page_path_list += [os.path.join(repo_directory, entry[0], entry[1] + '.md') for entry in index]
     
     return page_path_list
 
@@ -281,21 +302,26 @@ def action_init():
         elif platform not in platform_list:
             platform_list.append(platform)
 
-    color_choice = click.Choice(('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'))
+    log.info('Please input colors, empty to use default.')
+    colors_choice = click.Choice(('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'))
     colors = {
-        "description": click.prompt('Input color for description, empty to use default', type=color_choice, default='bright_yellow'),
-        "usage": click.prompt('Input color for usage, empty to use default', type=color_choice, default='green'),
-        "command": click.prompt('Input color for command, empty to use default', type=color_choice, default='white'),
-        "param": click.prompt('Input color for param, empty to use default', type=color_choice, default='cyan'),
+        "description": click.prompt('Input color for description', type=colors_choice, default='bright_yellow'),
+        "usage": click.prompt('Input color for usage', type=colors_choice, default='green'),
+        "command": click.prompt('Input color for command', type=colors_choice, default='white'),
+        "param": click.prompt('Input color for param', type=colors_choice, default='cyan'),
     }
+
+    color_output_choice = click.Choice(('always', 'auto', 'never'))
+    color_output = click.prompt('When output with color?', type=color_output_choice, default='auto')
 
     compact_output = click.prompt('Enable compact output (not output empty lines)? (yes/no)', default='no') == 'yes'
 
     config = {
-        "repo_directory_list": repo_path_list,
-        "colors": colors,
-        "platform_list": platform_list,
-        "compact_output": compact_output,
+        'repo_directory_list': repo_path_list,
+        'color_output': color_output,
+        'colors': colors,
+        'platform_list': platform_list,
+        'compact_output': compact_output,
     }
 
     log.info("Write to config file %r", config_path)
@@ -336,7 +362,7 @@ def action_find(command, platform):
     else:
         for page_path in page_path_list:
             output_lines = parse_page(page_path)
-            print(click.style(command + ' - ' + page_path, underline=True, bold=True))
+            print(style(command + ' - ' + page_path, underline=True, bold=True))
             print(''.join(output_lines))
 
 
@@ -365,7 +391,7 @@ def action_version():
     print(f'{__homepage__}')
 
 
-def parse_args():
+def parse_args(args=sys.argv[1:]):
     log = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser(
@@ -383,7 +409,7 @@ def parse_args():
 
     parser.add_argument('-V', '--version', action="store_true", help="Show version and exit")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     ctrl_group_set = args.init or args.list or args.update
     ok_conditions = [
