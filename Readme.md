@@ -39,6 +39,37 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 
 - Git: if you do not have `git`, you can still download `.zip` file from [tldr-pages/tldr](https://github.com/tldr-pages/tldr), extract it, and add it when run `tldr --init`, most things still work, but `tldr --update` will NOT work.
 
+### For Windows users
+
+A better terminal is recommended, which must support [ANSI escape sequences](https://en.wikipedia.org/wiki/ANSI_escape_code), and make sure `git` command is available. Try (combine) these: [Cmder](https://cmder.net/), [Cygwin](https://www.cygwin.com/), [Windows Terminal](https://github.com/microsoft/terminal), [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10), [Git for Windows](https://gitforwindows.org/), [scoop](https://github.com/lukesampson/scoop), [Chocolatey](https://chocolatey.org/), etc.
+
+Test your environment with Python 3:
+
+```python
+#!/usr/bin/env python3
+# encoding: utf-8
+
+import os
+import sys
+import shutil
+
+print(f'sys.stdout.isatty() -> {sys.stdout.isatty()}')
+print(f'env TERM = {os.environ.get("TERM")!r}')
+print('Test ANSI escape sequences: \x1b[31mred \x1b[1mbold\x1b[0m')
+print(f'git command is: {shutil.which("git")!r}')
+```
+
+If you are using Windows 10, you can import this to the Windows Registry to enable color output of `cmd` and `PowerShell`:
+
+```registry
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Console]
+"VirtualTerminalLevel"=dword:00000001
+```
+
+If output is not colored, try set `color_output` in the config file to `always`.
+
 ## Install
 
 Use `pip` to install:
@@ -91,38 +122,7 @@ Your configuration file should look like this:
 
 The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'`)
 
-The default location for the configuration file is `~/.tldr.config.json`, you can use the `TLDR_CONFIG_DIR` environment variable to point it to another folder (e.g. `$HOME/.config`).
-
-### For Windows users
-
-A better terminal is recommended, which must support [ANSI escape sequences](https://en.wikipedia.org/wiki/ANSI_escape_code), and make sure `git` command is available. Try (combine) these: [Cmder](https://cmder.net/), [Cygwin](https://www.cygwin.com/), [Windows Terminal](https://github.com/microsoft/terminal), [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10), [Git for Windows](https://gitforwindows.org/), [scoop](https://github.com/lukesampson/scoop), [Chocolatey](https://chocolatey.org/), etc.
-
-Test your environment with Python 3:
-
-```python
-#!/usr/bin/env python3
-# encoding: utf-8
-
-import os
-import sys
-import shutil
-
-print(f'sys.stdout.isatty() -> {sys.stdout.isatty()}')
-print(f'env TERM = {os.environ.get("TERM")!r}')
-print('Test ANSI escape sequences: \x1b[31mred \x1b[1mbold\x1b[0m')
-print(f'git command is: {shutil.which("git")!r}')
-```
-
-If you are using Windows 10, you can import this to the Windows Registry to enable color output of `cmd` and `PowerShell`:
-
-```registry
-Windows Registry Editor Version 5.00
-
-[HKEY_CURRENT_USER\Console]
-"VirtualTerminalLevel"=dword:00000001
-```
-
-If output is not colored, try set `color_output` in the config file to `always`.
+The default location for the config file is `~/.config/multi-tldr/.tldr.config.json`. You can use `TLDR_CONFIG_DIR` and `XDG_CONFIG_HOME` environment variable to point it to another path. If `TLDR_CONFIG_DIR` is `/a/b/c`, config file is `/a/b/c/.tldr.config.json`. If `XDG_CONFIG_HOME` is `/a/b/c`, config file is `/a/b/c/multi-tldr/.tldr.config.json`.
 
 ## Usage
 
@@ -192,7 +192,7 @@ A: `tldr --list | grep KEYWORD`
 
 **Q: I don't like the default color theme, how to change it?**
 
-A: Edit the tldr configuration file at `~/.tldr.config.json`; modify the color until you're happy with it.
+A: Edit the tldr configuration file, modify the color until you're happy with it.
 
 **Q: I faided to update the tldr pages, why?**
 

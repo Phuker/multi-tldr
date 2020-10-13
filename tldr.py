@@ -23,7 +23,7 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.12.1"
+__version__ = "0.13.0"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
@@ -52,12 +52,22 @@ if sys.flags.optimize > 0:
     sys.exit(1)
 
 
-def get_config_path():
-    config_dir_path = os.environ.get('TLDR_CONFIG_DIR', '~')
+def get_config_dir_path():
+    sub_dir_name = 'multi-tldr'
+    if 'TLDR_CONFIG_DIR' in os.environ:
+        config_dir_path = os.environ.get('TLDR_CONFIG_DIR')
+    elif 'XDG_CONFIG_HOME' in os.environ:
+        config_dir_path = os.path.join(os.environ.get('XDG_CONFIG_HOME'), sub_dir_name)
+    else:
+        config_dir_path = os.path.join('~', '.config', sub_dir_name)
+    
     config_dir_path = os.path.abspath(os.path.expanduser(config_dir_path))
-    config_path = os.path.join(config_dir_path, '.tldr.config.json')
 
-    return config_path
+    return config_dir_path
+
+
+def get_config_path():
+    return os.path.join(get_config_dir_path(), '.tldr.config.json')
 
 
 def check_config(config):
@@ -339,6 +349,11 @@ def action_init():
         'compact_output': compact_output,
     }
 
+    config_dir_path = get_config_dir_path()
+    if not os.path.exists(config_dir_path):
+        log.info('Make dir: %r', config_dir_path)
+        os.makedirs(config_dir_path)
+
     log.info("Write to config file %r", config_path)
     with open(config_path, 'w') as f:
         f.write(json.dumps(config, ensure_ascii=True, indent=4))
@@ -393,10 +408,7 @@ def action_list_command(command, platform):
         page_path_list = get_page_path_list(command, PLATFORM_ALL)
     
     for page_path in page_path_list:
-        try:
-            print(page_path)
-        except BrokenPipeError:
-            sys.exit()
+        print(page_path)
 
 
 def action_version():
@@ -479,8 +491,8 @@ def init_logging():
     logging.addLevelName(logging.DEBUG, f'{escape_fg_cyan}{logging.getLevelName(logging.DEBUG)}{escape_fg_default}')
 
 
-def cli():
-    """CLI entry point"""
+def main():
+    """Real entry point"""
 
     init_logging()
     args = parse_args()
@@ -497,5 +509,18 @@ def cli():
         action_find(args.command, args.platform)
 
 
+def _main():
+    """Entry point wrapper"""
+
+    # https://docs.python.org/3/library/signal.html#note-on-sigpipe
+    try:
+        main()
+        sys.stdout.flush()
+    except BrokenPipeError:
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    cli()
+    _main()

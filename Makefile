@@ -19,6 +19,7 @@ install: dist/*.whl
 	$(PYTHON) -m pip show multi-tldr
 
 upload: dist/*.whl dist/*.tar.gz
+	make test
 	$(PYTHON) -m twine check dist/*.whl dist/*.tar.gz
 	# username is: __token__
 	$(PYTHON) -m twine upload dist/*.whl dist/*.tar.gz
