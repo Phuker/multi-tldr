@@ -372,11 +372,20 @@ def action_update():
     log = logging.getLogger(__name__)
 
     repo_directory_list = get_config()['repo_directory_list']
+    command = ['git', 'pull', '--stat']
+    command_str = ' '.join(command)
 
     for repo_directory in repo_directory_list:
         os.chdir(repo_directory)
         log.info("Check for updates in %r ...", repo_directory)
-        subprocess.call(['git', 'pull', '--stat'])
+        try:
+            return_code = subprocess.call(command)
+            return_code_color = 'green' if return_code == 0 else 'bright_red'
+            return_code_str = style(str(return_code), fg=return_code_color)
+
+            log.info('Command %r return code %s', command_str, return_code_str)
+        except Exception as e:
+            log.error('Error when run %r in %r: %r %r', command_str, repo_directory, type(e), e)
 
 
 def action_find(command, platform):

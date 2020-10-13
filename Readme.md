@@ -148,10 +148,12 @@ tldr -p osx airport
 
 ```console
 $ tldr --update
-Check for updates in '/home/user/code/tldr' ...
+08:00:00 [INFO]:Check for updates in '/home/user/code/tldr/pages' ...
 Already up to date.
-Check for updates in '/home/user/code/tldr-private' ...
+08:00:02 [INFO]:Command 'git pull --stat' return code 0
+08:00:02 [INFO]:Check for updates in '/home/user/code/tldr-private/pages' ...
 Already up to date.
+08:00:04 [INFO]:Command 'git pull --stat' return code 0
 ```
 
 ### List tldr page files path
