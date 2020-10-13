@@ -122,7 +122,7 @@ Your configuration file should look like this:
 
 The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'`)
 
-The default location for the config file is `~/.config/multi-tldr/.tldr.config.json`. You can use `TLDR_CONFIG_DIR` and `XDG_CONFIG_HOME` environment variable to point it to another path. If `TLDR_CONFIG_DIR` is `/a/b/c`, config file is `/a/b/c/.tldr.config.json`. If `XDG_CONFIG_HOME` is `/a/b/c`, config file is `/a/b/c/multi-tldr/.tldr.config.json`.
+The default location for the config file is `~/.config/multi-tldr/tldr.config.json`. You can use `TLDR_CONFIG_DIR` and `XDG_CONFIG_HOME` environment variable to point it to another path. If `TLDR_CONFIG_DIR` is `/a/b/c`, config file is `/a/b/c/tldr.config.json`. If `XDG_CONFIG_HOME` is `/a/b/c`, config file is `/a/b/c/multi-tldr/tldr.config.json`.
 
 ## Usage
 

@@ -23,7 +23,7 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.13.0"
+__version__ = "0.13.1"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
@@ -67,7 +67,7 @@ def get_config_dir_path():
 
 
 def get_config_path():
-    return os.path.join(get_config_dir_path(), '.tldr.config.json')
+    return os.path.join(get_config_dir_path(), 'tldr.config.json')
 
 
 def check_config(config):
