@@ -43,6 +43,7 @@ class TldrPureFunctionTests(unittest.TestCase):
         self.assertRaises(KeyError, tldr.check_config, {})
 
         tldr.check_config(ok_config)
+        tldr.check_config(tldr.DEFAULT_CONFIG)
 
         config = copy.deepcopy(ok_config)
         config['repo_directory_list'] = ''

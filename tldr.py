@@ -23,7 +23,7 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.12.0"
+__version__ = "0.12.1"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
@@ -31,6 +31,21 @@ __copyright__ = "Copyright (c) 2020 Phuker, Copyright (c) 2015 lord63"
 
 PLATFORM_DEFAULT = 0
 PLATFORM_ALL = 1
+
+# High coupling
+# make things just work at a minimal level, or can not even --init
+DEFAULT_CONFIG = {
+    'repo_directory_list': [],
+    'color_output': 'never',
+    'colors': {
+        'description': 'bright_yellow',
+        'usage': 'green',
+        'command': 'white',
+        'param': 'cyan',
+    },
+    'platform_list': [],
+    'compact_output': False,
+}
 
 if sys.flags.optimize > 0:
     print('Error: Do not run with "-O", assert require no optimize', file=sys.stderr)
@@ -93,9 +108,9 @@ def get_config():
     if not os.path.exists(config_path):
         log.error("Can't find config file at: %r.", config_path)
         log.error('You may use `tldr --init` to init the config file.')
-        sys.exit(1)
+        return DEFAULT_CONFIG
 
-    log.debug('Reading file: %r', config_path)
+    log.debug('Reading file: %r', config_path) # os.debug() won't output until a handler is inited
     config = load_json(config_path)
 
     try:
@@ -104,7 +119,7 @@ def get_config():
     except Exception as e:
         log.error('Check config failed: %r.', e)
         log.error('You may use `tldr --init` to init the config file.')
-        sys.exit(1)
+        return DEFAULT_CONFIG
 
 
 def style(text, *args, **kwargs):
