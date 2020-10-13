@@ -71,7 +71,7 @@ class TldrPureFunctionTests(unittest.TestCase):
         self.assertRaises(AssertionError, tldr.check_config, config)
     
     def test_parse_args(self):
-        tldr.parse_args(['-V'])
+        tldr.parse_args(['-v'])
         tldr.parse_args(['--version'])
         tldr.parse_args(['--version', 'tar'])
         tldr.parse_args(['--version', '-p', 'linux', 'tar'])

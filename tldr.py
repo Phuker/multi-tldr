@@ -28,6 +28,7 @@ __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2020 Phuker, Copyright (c) 2015 lord63"
+__specification__ = "This tldr client is designed based on the tldr-pages client specification 1.4, but not 100% implemented."
 
 PLATFORM_DEFAULT = 0
 PLATFORM_ALL = 1
@@ -326,7 +327,7 @@ def action_init():
 
     platform_list = []
     platform_choice = click.Choice(('common', 'linux', 'osx', 'sunos', 'windows'))
-    log.info('Please input platform line by line, empty line to end.')
+    log.info('Please input default platforms line by line, empty line to end.')
     while True:
         platform = click.prompt("Input 1 platform", type=platform_choice, default='')
         if len(platform) == 0:
@@ -397,7 +398,12 @@ def action_find(command, platform):
     log = logging.getLogger(__name__)
 
     if platform:
-        page_path_list = get_page_path_list(command, platform)
+        if platform == 'all':
+            page_path_list = get_page_path_list(command, PLATFORM_ALL)
+        elif platform == 'default':
+            page_path_list = get_page_path_list(command, PLATFORM_DEFAULT)
+        else:
+            page_path_list = get_page_path_list(command, platform)
     else:
         page_path_list = get_page_path_list(command, PLATFORM_DEFAULT)
     
@@ -419,7 +425,12 @@ def action_list_command(command, platform):
     assert platform is None or type(platform) == str
 
     if platform:
-        page_path_list = get_page_path_list(command, platform)
+        if platform == 'all':
+            page_path_list = get_page_path_list(command, PLATFORM_ALL)
+        elif platform == 'default':
+            page_path_list = get_page_path_list(command, PLATFORM_DEFAULT)
+        else:
+            page_path_list = get_page_path_list(command, platform)
     else:
         page_path_list = get_page_path_list(command, PLATFORM_ALL)
     
@@ -428,10 +439,9 @@ def action_list_command(command, platform):
 
 
 def action_version():
-    print(f'{__title__}')
-    print(f'Version: {__version__}')
-    print(f'By {__author__}')
-    print(f'{__homepage__}')
+    print(f'{__title__}, by {__author__}, version {__version__}')
+    print(f'Homepage: {__homepage__}')
+    print(__specification__)
 
 
 def parse_args(args=sys.argv[1:]):
@@ -443,16 +453,21 @@ def parse_args(args=sys.argv[1:]):
         add_help=True
     )
     group = parser.add_mutually_exclusive_group(required=False)
-    group.add_argument('--init', action="store_true", help="Interactively gererate config file")
-    group.add_argument('--list', action='store_true', help="Print all tldr page files path (of a command if specified) in all repo on all/specified platform")
-    group.add_argument('--update', action="store_true", help="Pull all git repo")
+    group.add_argument('-i', '--init', action="store_true", help="Interactively gererate config file")
+    group.add_argument('-l', '--list', action='store_true', help="Print all tldr page files path (of a command if specified) in all repo on all/specified platform")
+    group.add_argument('-u', '--update', action="store_true", help="Pull all git repo")
     
-    parser.add_argument('command', help="Command to query", nargs='?')
-    parser.add_argument('-p', '--platform', help='Specify platform', choices=['common', 'linux', 'osx', 'sunos', 'windows'])
+    parser.add_argument('command', help="Command to query", nargs='*')
+    parser.add_argument('-p', '--platform', help="Specify platform. Special virtual platform options are 'all' and 'default'", choices=['common', 'linux', 'osx', 'sunos', 'windows', 'all', 'default'])
 
-    parser.add_argument('-V', '--version', action="store_true", help="Show version and exit")
+    parser.add_argument('-v', '--version', action="store_true", help="Show version and exit")
 
     args = parser.parse_args(args)
+
+    if len(args.command) > 0:
+        args.command = '-'.join(args.command)
+    else:
+        args.command = None
 
     ctrl_group_set = args.init or args.list or args.update
     ok_conditions = [

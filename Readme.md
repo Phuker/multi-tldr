@@ -126,20 +126,53 @@ The default location for the config file is `~/.config/multi-tldr/tldr.config.js
 
 ## Usage
 
-You can run `tldr --help` to get the help message.
+### Show help message
+
+```bash
+tldr --help
+```
+
+### Show version info
+
+```console
+$ tldr --version
+multi-tldr, by Phuker, version 0.13.1
+Homepage: https://github.com/Phuker/multi-tldr
+This tldr client is designed based on the tldr-pages client specification 1.4, but not 100% implemented.
+```
 
 ### Look for a command usage
 
-By default, only pages in `platform_list` are output:
-
 ```bash
 tldr tar
+tldr git pull    # same as `tldr git-pull`
 ```
 
-You can specify a platform using `-p` argument:
+By default, only pages on default platforms in `platform_list` are output:
+
+You can specify platform using `-p` argument:
 
 ```bash
-tldr -p osx airport
+tldr -p osx airport    # only osx platform
+tldr -p all snoop      # all platforms
+```
+
+### List tldr page files path
+
+List pages on all platforms:
+
+```bash
+tldr --list
+```
+
+Specify platform and/or a command:
+
+```bash
+tldr --list tar                # all platforms, only tar command
+tldr --list -p linux           # only linux platform
+tldr --list -p common du       # only common platform, only du command
+tldr --list -p default         # only default platforms in config
+tldr --list -p default tree    # only default platforms in config, only tree command
 ```
 
 ### Check for updates
@@ -154,22 +187,6 @@ Already up to date.
 08:00:02 [INFO]:Check for updates in '/home/user/code/tldr-private/pages' ...
 Already up to date.
 08:00:04 [INFO]:Command 'git pull --stat' return code 0
-```
-
-### List tldr page files path
-
-List all:
-
-```bash
-tldr --list
-```
-
-Specify a platform and/or a command:
-
-```bash
-tldr --list tar
-tldr --list -p linux
-tldr --list -p common du
 ```
 
 ## FAQ
