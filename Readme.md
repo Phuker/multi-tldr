@@ -10,22 +10,21 @@ Instead of the long man pages, tldr will give you several simple yet powerful ex
 
 ![tar-tldr-page](screenshots/screenshot1.png)
 
-The command examples are not good? Don't worry, you can set up your own `tldr`! They are just [simplified markdown files](https://github.com/tldr-pages/tldr/blob/master/contributing-guides/style-guide.md) and you can create your own pages. You can contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or keep them private.
+The command examples are not good? The tldr pages are just [simplified markdown files](https://github.com/tldr-pages/tldr/blob/master/contributing-guides/style-guide.md). You can easily contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or create your own repo and keep your pages private.
 
 One more thing, `tldr` is just a simple version for the man page, it's **NOT** an alternative. Sometimes, you should read the man pages patiently.
 
 ## Features
 
-- Use local file, fast without network delay. tldr pages are managed and updated by `git`.
-- Support custom output color.
+- No internet requests when lookup a tldr page, it is always fast.
+- tldr pages are managed by `git`, and updated manually by `tldr --update`.
+- Support display tldr pages in multi repo, multi platform, any language at the same time. You can create your own private tldr pages repo, add all dirs you want to the config file, whose path specified to the language level, e.g. `/path/to/pages/` or `/path/to/pages.xx/`.
+- Support custom output style, including color, compact output (not output empty lines).
 
-### Differences with `lord63/tldr.py`
+### Other differences with `lord63/tldr.py`
 
 - No need to use `tldr find some_command` or create an alias of `tldr find`, just type `tldr some_command` ([related issue](https://github.com/lord63/tldr.py/issues/47))
 - No need to rebuild `index.json` index file.
-- Support display multi repo and multi platform at the same time. You can create your own private tldr pages repo.
-- Support display tlgr pages in any languages, by specify repo dir path items in `repo_directory_list` to the `pages/` level.
-- New feature: compact output, not output empty lines.
 - Advanced parser: render nested `` ` `` inline code, `{{` and `}}` arguments ([related issue](https://github.com/lord63/tldr.py/issues/25)).
 - Config file format `YAML` --> `JSON`, because I hate `YAML`.
 - Drop support for Python 2.
@@ -41,7 +40,7 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 
 ### For Windows users
 
-A better terminal is recommended, which must support [ANSI escape sequences](https://en.wikipedia.org/wiki/ANSI_escape_code), and make sure `git` command is available. Try (combine) these: [Cmder](https://cmder.net/), [Cygwin](https://www.cygwin.com/), [Windows Terminal](https://github.com/microsoft/terminal), [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10), [Git for Windows](https://gitforwindows.org/), [scoop](https://github.com/lukesampson/scoop), [Chocolatey](https://chocolatey.org/), etc.
+A better terminal is recommended, which must support [ANSI escape sequences](https://en.wikipedia.org/wiki/ANSI_escape_code), and make sure `git` command is available. You may try and/or combine these: [Cmder](https://cmder.net/), [Cygwin](https://www.cygwin.com/), [Windows Terminal](https://github.com/microsoft/terminal), [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10), [Git for Windows](https://gitforwindows.org/), [scoop](https://github.com/lukesampson/scoop), [Chocolatey](https://chocolatey.org/), etc.
 
 Test your environment with Python 3:
 
@@ -59,7 +58,7 @@ print('Test ANSI escape sequences: \x1b[31mred \x1b[1mbold\x1b[0m')
 print(f'git command is: {shutil.which("git")!r}')
 ```
 
-If you are using Windows 10, you can import this to the Windows Registry to enable color output of `cmd` and `PowerShell` ([related discussions](https://superuser.com/questions/413073/windows-console-with-ansi-colors-handling)):
+If you are using Windows 10, you can import this to the Windows Registry to enable [ANSI escape sequences](https://en.wikipedia.org/wiki/ANSI_escape_code) of `cmd` and `PowerShell` to enable colord output ([related discussions](https://superuser.com/questions/413073/windows-console-with-ansi-colors-handling)):
 
 ```registry
 Windows Registry Editor Version 5.00
@@ -82,7 +81,7 @@ python3 -m pip install -U multi-tldr
 
 ### Clone [tldr-pages/tldr](https://github.com/tldr-pages/tldr)
 
-First, clone the [tldr-pages/tldr](https://github.com/tldr-pages/tldr) to somewhere (e.g. `~/code/tldr`). We will use it when we look for a command usage.
+`cd` to some directory (e.g. `~/code/tldr`) and clone the [tldr-pages/tldr](https://github.com/tldr-pages/tldr) repo. We will use it when we look up a command usage.
 
 ```bash
 git clone --depth=1 https://github.com/tldr-pages/tldr.git
@@ -95,6 +94,8 @@ Then, run this command to interactively generate configuration file:
 ```bash
 tldr --init
 ```
+
+The default location for the config file is `~/.config/multi-tldr/tldr.config.json`. You can use `TLDR_CONFIG_DIR` and `XDG_CONFIG_HOME` environment variable to point it to another path. If `TLDR_CONFIG_DIR` is `/a/b/c`, config file is `/a/b/c/tldr.config.json`. If `XDG_CONFIG_HOME` is `/a/b/c`, config file is `/a/b/c/multi-tldr/tldr.config.json`.
 
 Your configuration file should look like this:
 
@@ -122,8 +123,6 @@ Your configuration file should look like this:
 
 The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'`)
 
-The default location for the config file is `~/.config/multi-tldr/tldr.config.json`. You can use `TLDR_CONFIG_DIR` and `XDG_CONFIG_HOME` environment variable to point it to another path. If `TLDR_CONFIG_DIR` is `/a/b/c`, config file is `/a/b/c/tldr.config.json`. If `XDG_CONFIG_HOME` is `/a/b/c`, config file is `/a/b/c/multi-tldr/tldr.config.json`.
-
 ## Usage
 
 ### Show help message
@@ -141,14 +140,14 @@ Homepage: https://github.com/Phuker/multi-tldr
 This tldr client is designed based on the tldr-pages client specification 1.4, but not 100% implemented.
 ```
 
-### Look for a command usage
+### Look up a command usage
 
 ```bash
 tldr tar
 tldr git pull    # same as `tldr git-pull`
 ```
 
-By default, only pages on default platforms in `platform_list` are output:
+By default, only pages on default platforms in `platform_list` are output.
 
 You can specify platform using `-p` argument:
 
@@ -159,7 +158,7 @@ tldr -p all snoop      # all platforms
 
 ### List tldr page files path
 
-List pages on all platforms:
+List all pages on all platforms:
 
 ```bash
 tldr --list
@@ -193,17 +192,9 @@ Already up to date.
 
 **Q: I want to add some custom command usages to a command, how to do it?**
 
-**Q: I want to add some custom command pages, how?**
+**Q: I want to create some private command pages, how?**
 
 A: You can contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or create your own Git repo, or just create a private directory, and add it to `repo_directory_list`.
-
-**Q: I want a short command like `tldr COMMAND`, not `tldr find COMMAND`.**
-
-A: This problem not exists any more.
-
-**Q: Do I need to rebuild any index after `git pull` or create new `.md` files?**
-
-A: You don't any more. Local file is fast enough, and I added a cache decorator.
 
 **Q: I want fuzzy find command usage.**
 
@@ -211,7 +202,7 @@ A: `tldr --list | grep KEYWORD`
 
 **Q: I don't like the default color theme, how to change it?**
 
-A: Edit the tldr configuration file, modify the color until you're happy with it.
+A: Edit the configuration file, modify the color until you're happy with it.
 
 **Q: I faided to update the tldr pages, why?**
 
@@ -221,10 +212,11 @@ A: Actually, This program just tries to pull the latest tldr pages for you, no m
 
 A: In fact, you can use the offical assets if you want, download the assets and extract it somewhere, but this program don't support update it using `tldr --update`.
 
-Use a `git` repo, you can:
+By using `git`, we can:
 
+- make this program simple but powerful, and easy to understand and control.
 - do the version control, yeah, use `git`.
-- better for customization, just edit the pages and add new pages, they belongs to you. You can even maintain your own 'tldr'. If use the official assets, you'll always get the latest pages.
+- easily maintain private repos.
 
 ## Contributing
 
