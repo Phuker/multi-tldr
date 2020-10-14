@@ -23,15 +23,13 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.13.1"
+__version__ = "0.14.0"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2020 Phuker, Copyright (c) 2015 lord63"
 __specification__ = "This tldr client is designed based on the tldr-pages client specification 1.4, but not 100% implemented."
 
-PLATFORM_DEFAULT = 0
-PLATFORM_ALL = 1
 
 # High coupling
 # make things just work at a minimal level, or can not even --init
@@ -273,11 +271,11 @@ def get_index(repo_directory):
     return index
 
 
-def get_page_path_list(command=None, platform=PLATFORM_DEFAULT):
+def get_page_path_list(command=None, platform='default'):
     """Get page_path_list in all repo"""
 
     assert command is None or type(command) == str
-    assert type(platform) in (int, str)
+    assert type(platform) == str
 
     repo_directory_list = get_config()['repo_directory_list']
     default_platform_set = set(get_config()['platform_list'])
@@ -290,9 +288,9 @@ def get_page_path_list(command=None, platform=PLATFORM_DEFAULT):
             filter_func = lambda entry: entry[1] == command
             index = filter(filter_func, index)
         
-        if platform == PLATFORM_ALL:
+        if platform == 'all':
             pass
-        elif platform == PLATFORM_DEFAULT:
+        elif platform == 'default':
             index = filter(lambda entry: entry[0] in default_platform_set, index)
         else:
             index = filter(lambda entry: entry[0] == platform, index)
@@ -398,18 +396,15 @@ def action_find(command, platform):
     log = logging.getLogger(__name__)
 
     if platform:
-        if platform == 'all':
-            page_path_list = get_page_path_list(command, PLATFORM_ALL)
-        elif platform == 'default':
-            page_path_list = get_page_path_list(command, PLATFORM_DEFAULT)
-        else:
-            page_path_list = get_page_path_list(command, platform)
+        page_path_list = get_page_path_list(command, platform)
     else:
-        page_path_list = get_page_path_list(command, PLATFORM_DEFAULT)
+        page_path_list = get_page_path_list(command, 'default')
     
     if len(page_path_list) == 0:
         log.error("Command not found: %r", command)
-        log.error("You can file an issue or send a PR on github: https://github.com/tldr-pages/tldr")
+        log.error("You can try to find a page on all platforms by run %r.", f'tldr -p all {command}')
+        log.error("If still nothing, you can create a new issue against the tldr-pages/tldr GitHub repository: %r,", f'https://github.com/tldr-pages/tldr/issues/new?title=page%20request:%20{command}')
+        log.error("or create a Pull Request on GitHub.")
         sys.exit(1)
     else:
         for page_path in page_path_list:
@@ -425,14 +420,9 @@ def action_list_command(command, platform):
     assert platform is None or type(platform) == str
 
     if platform:
-        if platform == 'all':
-            page_path_list = get_page_path_list(command, PLATFORM_ALL)
-        elif platform == 'default':
-            page_path_list = get_page_path_list(command, PLATFORM_DEFAULT)
-        else:
-            page_path_list = get_page_path_list(command, platform)
+        page_path_list = get_page_path_list(command, platform)
     else:
-        page_path_list = get_page_path_list(command, PLATFORM_ALL)
+        page_path_list = get_page_path_list(command, 'all')
     
     for page_path in page_path_list:
         print(page_path)

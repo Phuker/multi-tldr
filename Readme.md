@@ -79,6 +79,8 @@ python3 -m pip install -U multi-tldr
 
 ## Initialize manually
 
+This program won't work out of the box, first you need to initialize it manually.
+
 ### Clone [tldr-pages/tldr](https://github.com/tldr-pages/tldr)
 
 `cd` to some directory (e.g. `~/code/tldr`) and clone the [tldr-pages/tldr](https://github.com/tldr-pages/tldr) repo. We will use it when we look up a command usage.
@@ -124,6 +126,8 @@ Your configuration file should look like this:
 The `colors` option is for the output when you look for a command, you can custom it by yourself. (Note that the color should be in `'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'`)
 
 ## Usage
+
+This tldr client is designed based on the [tldr-pages client specification 1.4](https://github.com/tldr-pages/tldr/blob/master/CLIENT-SPECIFICATION.md), so it is very similar to other clients. But the specification is not 100% implemented, there is some differences.
 
 ### Show help message
 
@@ -174,6 +178,15 @@ tldr --list -p default         # only default platforms in config
 tldr --list -p default tree    # only default platforms in config, only tree command
 ```
 
+Fuzzy find a command:
+
+```console
+$ tldr -l | grep git | grep show
+/home/user/code/tldr/pages/common/git-show.md
+/home/user/code/tldr/pages/common/git-show-ref.md
+/home/user/code/tldr/pages/common/git-show-branch.md
+```
+
 ### Check for updates
 
 `git pull` will be run in all dir paths of `repo_directory_list`, so that we can get the latest tldr pages.
@@ -196,10 +209,6 @@ Already up to date.
 
 A: You can contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or create your own Git repo, or just create a private directory, and add it to `repo_directory_list`.
 
-**Q: I want fuzzy find command usage.**
-
-A: `tldr --list | grep KEYWORD`
-
 **Q: I don't like the default color theme, how to change it?**
 
 A: Edit the configuration file, modify the color until you're happy with it.
@@ -208,7 +217,7 @@ A: Edit the configuration file, modify the color until you're happy with it.
 
 A: Actually, This program just tries to pull the latest tldr pages for you, no magic behinds it. So the reason why you faided to update is that this program failed to pull the latest upstream, check the failing output and you may know the reason, e.g. you make some changes and haven't commit them yet. You can pull the pages by hand so you can have a better control on it.
 
-**Q: Why use the git repo instead of the assets packaged by the official?**
+**Q: Why use `git`, instead of download assets packaged by the official?**
 
 A: In fact, you can use the offical assets if you want, download the assets and extract it somewhere, but this program don't support update it using `tldr --update`.
 
@@ -217,6 +226,10 @@ By using `git`, we can:
 - make this program simple but powerful, and easy to understand and control.
 - do the version control, yeah, use `git`.
 - easily maintain private repos.
+
+**Q: How to auto update tldr pages?**
+
+A: This program will neither update tldr pages when loop up a command, nor create a daemon or service to update tldr pages periodically. Updating is totally up to you. You can run `tldr --update` manually at any time you want, or use `crontab`, Windows `Task Scheduler` or any tool else to automatically update.
 
 ## Contributing
 

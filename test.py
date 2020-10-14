@@ -82,6 +82,12 @@ class TldrPureFunctionTests(unittest.TestCase):
         tldr.parse_args(['--list', '-p', 'linux', 'tar'])
         tldr.parse_args(['--update'])
 
+        args = tldr.parse_args(['-p', 'linux', 'git', 'pull'])
+        self.assertEqual(args.command, 'git-pull')
+
+        args = tldr.parse_args(['aaa', 'bbb', 'ccc', 'ddd'])
+        self.assertEqual(args.command, 'aaa-bbb-ccc-ddd')
+
         for args in (
             ['--xxxx'],
             ['--init', '-p', 'linux'],
@@ -199,14 +205,14 @@ class TestsWithConfig(unittest.TestCase):
             os.path.join(ROOT, 'tldr-pages-test', 'pages2', 'common', 'tldr-test.md'),
             os.path.join(ROOT, 'tldr-pages-test', 'pages2', 'sunos', 'tldr-test.md'),
         ]
-        result = tldr.get_page_path_list('tldr-test', tldr.PLATFORM_ALL)
+        result = tldr.get_page_path_list('tldr-test', 'all')
         self.assertEqual(sorted(result_expected), sorted(result))
 
         result_expected = [
             os.path.join(ROOT, 'tldr-pages-test', 'pages1', 'common', 'tldr-test.md'),
             os.path.join(ROOT, 'tldr-pages-test', 'pages2', 'common', 'tldr-test.md'),
         ]
-        result = tldr.get_page_path_list('tldr-test', tldr.PLATFORM_DEFAULT)
+        result = tldr.get_page_path_list('tldr-test', 'default')
         self.assertEqual(sorted(result_expected), sorted(result))
 
         result_expected = [
@@ -224,7 +230,7 @@ class TestsWithConfig(unittest.TestCase):
             os.path.join(ROOT, 'tldr-pages-test', 'pages2', 'common', 'tldr-test.md'),
             os.path.join(ROOT, 'tldr-pages-test', 'pages2', 'sunos', 'tldr-test.md'),
         ]
-        result = tldr.get_page_path_list(None, tldr.PLATFORM_ALL)
+        result = tldr.get_page_path_list(None, 'all')
         self.assertEqual(sorted(result_expected), sorted(result))
 
         result_expected = [
@@ -235,7 +241,7 @@ class TestsWithConfig(unittest.TestCase):
             os.path.join(ROOT, 'tldr-pages-test', 'pages1', 'osx', 'du.md'),
             os.path.join(ROOT, 'tldr-pages-test', 'pages2', 'common', 'tldr-test.md'),
         ]
-        result = tldr.get_page_path_list(None, tldr.PLATFORM_DEFAULT)
+        result = tldr.get_page_path_list(None, 'default')
         self.assertEqual(sorted(result_expected), sorted(result))
 
         result_expected = [
