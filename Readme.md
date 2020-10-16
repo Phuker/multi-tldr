@@ -8,7 +8,7 @@ Forked from [lord63/tldr.py](https://github.com/lord63/tldr.py), whose original 
 
 Instead of the long man pages, tldr will give you several simple yet powerful examples:
 
-![tar-tldr-page](screenshots/screenshot1.png)
+![multi-tldr tar command](screenshots/screenshot1.png)
 
 The command examples are not good? The tldr pages are just [simplified markdown files](https://github.com/tldr-pages/tldr/blob/master/contributing-guides/style-guide.md). You can easily contribute to [tldr-pages/tldr](https://github.com/tldr-pages/tldr), or create your own repo and keep your pages private.
 
@@ -20,6 +20,8 @@ One more thing, `tldr` is just a simple version for the man page, it's **NOT** a
 - tldr pages are managed by `git`, and updated manually by `tldr --update`.
 - Support display tldr pages in multi repo, multi platform, any language at the same time. You can create your own private tldr pages repo, add all dirs you want to the config file, whose path specified to the language level, e.g. `/path/to/pages/` or `/path/to/pages.xx/`.
 - Support custom output style, including color, compact output (not output empty lines).
+
+![multi-tldr custom output style](screenshots/screenshot2.png)
 
 ### Other differences with `lord63/tldr.py`
 
@@ -71,7 +73,9 @@ If output is not colored, try set `color_output` in the config file to `always`.
 
 ## Install
 
-Use `pip` to install:
+First, uninstall any other existing tldr client.
+
+Then, use `pip` to install:
 
 ```bash
 python3 -m pip install -U multi-tldr

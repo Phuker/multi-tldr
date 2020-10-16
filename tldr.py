@@ -223,6 +223,7 @@ def parse_page(page_file_path):
     
     output_lines = []
     for line in lines:
+        line = line.strip('\n')
         if line.startswith('# '): # h1
             continue
         elif line.startswith('> '): # description
@@ -232,11 +233,11 @@ def parse_page(page_file_path):
             line = parse_inline_md(line[2:], 'usage')
             output_lines.append(line)
         elif line.startswith('`'): # code example
-            line = line.strip('`\n')
+            line = line.strip('`')
             line = parse_inline_md(line, 'command')
-            line = '    ' + line + '\n'
+            line = '    ' + line
             output_lines.append(line)
-        elif line.startswith("\n"): # empty line
+        elif line == '':
             if not compact_output:
                 # default: reset = True, add reset string at the end
                 output_lines.append(style(line))
@@ -245,6 +246,8 @@ def parse_page(page_file_path):
         else:
             line = parse_inline_md(line, 'usage')
             output_lines.append(line)
+    
+    output_lines.append(style('')) # gap new line + fail safe reset
     return output_lines
 
 
@@ -408,9 +411,10 @@ def action_find(command, platform):
         sys.exit(1)
     else:
         for page_path in page_path_list:
-            output_lines = parse_page(page_path)
             print(style(command + ' - ' + page_path, underline=True, bold=True))
-            print(''.join(output_lines))
+            output_lines = parse_page(page_path)
+            for line in output_lines:
+                print(line)
 
 
 def action_list_command(command, platform):
