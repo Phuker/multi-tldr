@@ -23,7 +23,7 @@ import click
 
 
 __title__ = "multi-tldr"
-__version__ = "0.14.0"
+__version__ = "0.14.1"
 __author__ = "Phuker"
 __homepage__ = "https://github.com/Phuker/multi-tldr"
 __license__ = "MIT"
