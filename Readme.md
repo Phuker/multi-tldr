@@ -238,11 +238,9 @@ A: This program will neither update tldr pages when loop up a command, nor creat
 
 ## Contributing
 
-- It sucks? Why not help me improve it? Let me know the bad things.
-- Want a new feature? Feel free to file an issue for a feature request.
-- Find a bug? Open an issue please, or it's better if you can send me a pull request.
+It sucks? Want a new feature? Find a bug?
 
-Contributions are always welcome at any time!
+Please open an issue, and let me know the bad things and your opinion. After our discussion, a pull request is welcomed.
 
 ## License
 
