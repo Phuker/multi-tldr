@@ -118,6 +118,7 @@ Your configuration file should look like this:
         "command": "white",
         "param": "cyan"
     },
+    "command_indent_size": 4,
     "platform_list": [
         "common",
         "osx",

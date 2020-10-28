@@ -42,6 +42,7 @@ DEFAULT_CONFIG = {
         'command': 'white',
         'param': 'cyan',
     },
+    'command_indent_size': 4,
     'platform_list': [],
     'compact_output': False,
 }
@@ -76,9 +77,12 @@ def check_config(config):
     assert type(config['platform_list']) == list, 'type(platform_list) != list'
     assert type(config['repo_directory_list']) == list, 'type(repo_directory_list) != list'
     assert type(config['compact_output']) == bool, 'type(compact_output) != bool'
+    assert type(config['command_indent_size']) == int, 'type(command_indent_size) != int'
 
     supported_color_output = ('always', 'auto', 'never')
     assert config['color_output'] in supported_color_output
+
+    assert config['command_indent_size'] >= 0, 'command_indent_size < 0'
     
     supported_colors = ('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white')
     if not set(config['colors'].values()).issubset(set(supported_colors)):
@@ -216,6 +220,7 @@ def parse_page(page_file_path):
     log = logging.getLogger(__name__)
 
     compact_output = get_config()['compact_output']
+    command_indent_size = get_config()['command_indent_size']
 
     log.debug('Reading file: %r', page_file_path)
     with open(page_file_path, 'r', encoding='utf-8') as f:
@@ -235,7 +240,7 @@ def parse_page(page_file_path):
         elif line.startswith('`'): # code example
             line = line.strip('`')
             line = parse_inline_md(line, 'command')
-            line = '    ' + line
+            line = (' ' * command_indent_size) + line
             output_lines.append(line)
         elif line == '':
             if not compact_output:
@@ -348,12 +353,17 @@ def action_init():
     color_output_choice = click.Choice(('always', 'auto', 'never'))
     color_output = click.prompt('When output with color?', type=color_output_choice, default='auto')
 
+    command_indent_size = click.prompt('Command indent size?', type=int, default=4)
+    if command_indent_size < 0:
+        command_indent_size = 0
+
     compact_output = click.prompt('Enable compact output (not output empty lines)? (yes/no)', default='no') == 'yes'
 
     config = {
         'repo_directory_list': repo_path_list,
         'color_output': color_output,
         'colors': colors,
+        'command_indent_size': command_indent_size,
         'platform_list': platform_list,
         'compact_output': compact_output,
     }
@@ -411,7 +421,7 @@ def action_find(command, platform):
         sys.exit(1)
     else:
         for page_path in page_path_list:
-            print(style(command + ' - ' + page_path, underline=True, bold=True))
+            print(style(command, underline=True, bold=True) + ' - ' + style(page_path, underline=True, bold=True))
             output_lines = parse_page(page_path)
             for line in output_lines:
                 print(line)

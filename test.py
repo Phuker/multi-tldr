@@ -25,6 +25,7 @@ ok_config = {
         "command": "white",
         "param": "cyan"
     },
+    "command_indent_size": 4,
     "platform_list": [
         "common",
         "osx",
@@ -68,6 +69,14 @@ class TldrPureFunctionTests(unittest.TestCase):
 
         config = copy.deepcopy(ok_config)
         config['platform_list'] = 'not_exist_os'
+        self.assertRaises(AssertionError, tldr.check_config, config)
+
+        config = copy.deepcopy(ok_config)
+        config['command_indent_size'] = '4'
+        self.assertRaises(AssertionError, tldr.check_config, config)
+
+        config = copy.deepcopy(ok_config)
+        config['command_indent_size'] = -1
         self.assertRaises(AssertionError, tldr.check_config, config)
     
     def test_parse_args(self):
