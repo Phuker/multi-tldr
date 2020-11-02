@@ -19,6 +19,9 @@ import argparse
 import subprocess
 import functools
 
+# buggy: https://github.com/pallets/click/issues/665
+# import readline
+
 import click
 
 
